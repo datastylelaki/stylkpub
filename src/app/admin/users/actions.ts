@@ -57,15 +57,12 @@ export async function createUser(data: { email: string; password: string; name: 
 
     if (!newUser.user) throw new Error("Gagal membuat user auth");
 
-    // 2. Insert into Profiles
+    // 2. Update the profile created by the trigger with the correct role
+    // (The trigger auto-creates a profile with role 'kasir', so we update it)
     const { error: profileError } = await adminSupabase
         .from("profiles")
-        .upsert({
-            user_id: newUser.user.id,
-            name: data.name,
-            role: data.role,
-            created_at: new Date().toISOString(),
-        });
+        .update({ name: data.name, role: data.role })
+        .eq("user_id", newUser.user.id);
 
     if (profileError) {
         console.error("Error creating profile:", profileError);
