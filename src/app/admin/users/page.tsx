@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,6 @@ import { ModeToggle } from "@/components/mode-toggle";
 
 export default async function AdminUsersPage() {
     const supabase = await createClient();
-    const adminSupabase = createAdminClient();
     const { data: { user } = { user: null } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -35,8 +33,8 @@ export default async function AdminUsersPage() {
         return <div className="p-8 text-center text-white">Akses Ditolak: Anda bukan Admin.</div>;
     }
 
-    // Fetch all users from profiles using admin client
-    const { data: profiles, error } = await adminSupabase
+    // Fetch all users from profiles
+    const { data: profiles, error } = await supabase
         .from("profiles")
         .select("*")
         .order("name");
