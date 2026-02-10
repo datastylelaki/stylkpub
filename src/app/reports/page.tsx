@@ -11,9 +11,14 @@ import Link from "next/link";
 export default async function ReportsPage() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
 
-    if (!user) {
-        redirect("/login");
+    if (profile?.role !== "admin") {
+        return <div className="p-8 text-center text-white">Akses Ditolak: Khusus Admin.</div>;
     }
 
     // Fetch transactions

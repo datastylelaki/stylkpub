@@ -157,11 +157,13 @@ export default function POSDashboard({ user, profile, categories, products }: PO
                         )}
 
                         {/* Reports Button */}
-                        <Link href="/reports">
-                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" title="Laporan">
-                                <BarChart3 className="h-5 w-5" />
-                            </Button>
-                        </Link>
+                        {profile?.role === "admin" && (
+                            <Link href="/reports">
+                                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" title="Laporan">
+                                    <BarChart3 className="h-5 w-5" />
+                                </Button>
+                            </Link>
+                        )}
 
                         <ModeToggle />
 
