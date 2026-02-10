@@ -489,7 +489,8 @@ function ProductCard({
                     }}
                 >
                     <Plus className="w-4 h-4 mr-1" />
-                    Tambah ke Keranjang
+                    <span className="hidden sm:inline">Tambah ke Keranjang</span>
+                    <span className="sm:hidden">Tambah</span>
                 </Button>
             </div>
         </Card>
