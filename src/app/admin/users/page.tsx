@@ -12,6 +12,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { UserRoleToggle } from "@/components/admin/UserRoleToggle";
+import { CreateUserDialog } from "@/components/admin/CreateUserDialog";
 import { ModeToggle } from "@/components/mode-toggle";
 
 export default async function AdminUsersPage() {
@@ -61,6 +62,7 @@ export default async function AdminUsersPage() {
                             Settings
                         </Button>
                     </Link>
+                    <CreateUserDialog />
                 </div>
             </div>
 
