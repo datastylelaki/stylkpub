@@ -1,6 +1,13 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +23,7 @@ export function DailyReport({ transactions }: DailyReportProps) {
     const today = new Date().toLocaleDateString("en-CA");
     const [startDate, setStartDate] = useState<string>(today);
     const [endDate, setEndDate] = useState<string>(today);
+    const [rangeType, setRangeType] = useState("today");
 
     const dailyData = useMemo(() => {
         if (!transactions) return { stats: { total: 0, cash: 0, qris: 0, count: 0, cashCount: 0, qrisCount: 0 }, transactions: [] };
@@ -46,6 +54,36 @@ export function DailyReport({ transactions }: DailyReportProps) {
         return { stats, transactions: filtered };
     }, [transactions, startDate, endDate]);
 
+    const formatDate = (date: Date) => date.toLocaleDateString("en-CA");
+
+    const handleRangeChange = (value: string) => {
+        setRangeType(value);
+        const todayDate = new Date();
+
+        if (value === "today") {
+            const str = formatDate(todayDate);
+            setStartDate(str);
+            setEndDate(str);
+        } else if (value === "yesterday") {
+            const yesterday = new Date(todayDate);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const str = formatDate(yesterday);
+            setStartDate(str);
+            setEndDate(str);
+        } else if (value === "thisMonth") {
+            const firstDay = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
+            setStartDate(formatDate(firstDay));
+            setEndDate(formatDate(todayDate));
+        } else if (value === "last7") {
+            const last7 = new Date(todayDate);
+            last7.setDate(last7.getDate() - 6);
+            setStartDate(formatDate(last7));
+            setEndDate(formatDate(todayDate));
+        } else if (value === "custom") {
+            // Keep current values or reset to today? Keeping current is better UX
+        }
+    };
+
     const handleExport = () => {
         if (dailyData.transactions.length === 0) return;
 
@@ -73,45 +111,58 @@ export function DailyReport({ transactions }: DailyReportProps) {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <h3 className="text-xl font-bold tracking-tight">
                     Laporan Transaksi
                 </h3>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground whitespace-nowrap">Dari:</span>
-                        <div className="relative">
-                            <Calendar className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                className="pl-9 bg-zinc-900 border-zinc-800 text-white w-[150px]"
-                            />
-                        </div>
+                <div className="flex flex-col gap-2 w-full md:w-auto">
+                    <div className="flex items-center gap-2 w-full md:w-auto">
+                        <Select value={rangeType} onValueChange={handleRangeChange}>
+                            <SelectTrigger className="w-[180px] bg-zinc-900 border-zinc-800 text-white">
+                                <SelectValue placeholder="Pilih Rentang Waktu" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                <SelectItem value="today">Hari Ini</SelectItem>
+                                <SelectItem value="yesterday">Kemarin</SelectItem>
+                                <SelectItem value="last7">7 Hari Terakhir</SelectItem>
+                                <SelectItem value="thisMonth">Bulan Ini</SelectItem>
+                                <SelectItem value="custom">Pilih Tanggal Manual</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={handleExport}
+                            disabled={dailyData.transactions.length === 0}
+                            title="Export to CSV"
+                            className="bg-zinc-900 border-zinc-800 text-white hover:bg-zinc-800"
+                        >
+                            <Download className="h-4 w-4" />
+                        </Button>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground whitespace-nowrap">Sampai:</span>
-                        <div className="relative">
-                            <Calendar className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                className="pl-9 bg-zinc-900 border-zinc-800 text-white w-[150px]"
-                            />
+
+                    {rangeType === "custom" && (
+                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                            <div className="relative">
+                                <Input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="bg-zinc-900 border-zinc-800 text-white w-[140px] h-9 text-xs"
+                                />
+                            </div>
+                            <span className="text-muted-foreground">-</span>
+                            <div className="relative">
+                                <Input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="bg-zinc-900 border-zinc-800 text-white w-[140px] h-9 text-xs"
+                                />
+                            </div>
                         </div>
-                    </div>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={handleExport}
-                        disabled={dailyData.transactions.length === 0}
-                        title="Export to CSV"
-                        className="ml-2"
-                    >
-                        <Download className="h-4 w-4" />
-                    </Button>
+                    )}
                 </div>
             </div>
 
