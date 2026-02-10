@@ -13,18 +13,18 @@ interface DailyReportProps {
 
 export function DailyReport({ transactions }: DailyReportProps) {
     // Default to today's date in local format YYYY-MM-DD
-    const [selectedDate, setSelectedDate] = useState<string>(
-        new Date().toLocaleDateString("en-CA")
-    );
+    const today = new Date().toLocaleDateString("en-CA");
+    const [startDate, setStartDate] = useState<string>(today);
+    const [endDate, setEndDate] = useState<string>(today);
 
     const dailyData = useMemo(() => {
         if (!transactions) return { stats: { total: 0, cash: 0, qris: 0, count: 0, cashCount: 0, qrisCount: 0 }, transactions: [] };
 
         const filtered = transactions.filter((t) => {
             // Convert transaction UTC string to local date string for comparison
-            // This is a simple approximation. For strict accuracy, we might need date-fns or similar
             const txDate = new Date(t.created_at).toLocaleDateString("en-CA");
-            return txDate === selectedDate;
+            // Inclusive date range filtering
+            return txDate >= startDate && txDate <= endDate;
         });
 
         const stats = filtered.reduce(
@@ -44,7 +44,7 @@ export function DailyReport({ transactions }: DailyReportProps) {
         );
 
         return { stats, transactions: filtered };
-    }, [transactions, selectedDate]);
+    }, [transactions, startDate, endDate]);
 
     const handleExport = () => {
         if (dailyData.transactions.length === 0) return;
@@ -52,19 +52,20 @@ export function DailyReport({ transactions }: DailyReportProps) {
         const headers = ["ID Transaksi", "Waktu", "Metode Pembayaran", "Total"];
         const rows = dailyData.transactions.map((t) => [
             `#${t.id.substring(0, 8)}`,
-            new Date(t.created_at).toLocaleTimeString("id-ID"),
+            new Date(t.created_at).toLocaleString("id-ID"),
             t.payment_method.toUpperCase(),
             t.total.toString(),
         ]);
 
         const csvContent =
-            "data:text/csv;charset=utf-8," +
+            "\uFEFF" + // BOM for Excel compatibility
             [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
 
-        const encodedUri = encodeURI(csvContent);
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `laporan_harian_${selectedDate}.csv`);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `laporan_transaksi_${startDate}_sd_${endDate}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -72,19 +73,34 @@ export function DailyReport({ transactions }: DailyReportProps) {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
                 <h3 className="text-xl font-bold tracking-tight">
-                    Laporan Harian
+                    Laporan Transaksi
                 </h3>
-                <div className="flex items-center gap-2">
-                    <div className="relative">
-                        <Calendar className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            className="pl-9 bg-zinc-900 border-zinc-800 text-white w-[180px]"
-                        />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">Dari:</span>
+                        <div className="relative">
+                            <Calendar className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="pl-9 bg-zinc-900 border-zinc-800 text-white w-[150px]"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">Sampai:</span>
+                        <div className="relative">
+                            <Calendar className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="pl-9 bg-zinc-900 border-zinc-800 text-white w-[150px]"
+                            />
+                        </div>
                     </div>
                     <Button
                         variant="outline"
@@ -92,6 +108,7 @@ export function DailyReport({ transactions }: DailyReportProps) {
                         onClick={handleExport}
                         disabled={dailyData.transactions.length === 0}
                         title="Export to CSV"
+                        className="ml-2"
                     >
                         <Download className="h-4 w-4" />
                     </Button>
@@ -101,7 +118,7 @@ export function DailyReport({ transactions }: DailyReportProps) {
             <div className="grid gap-4 md:grid-cols-3">
                 <Card className="bg-zinc-900 border-zinc-800 text-white">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Per Hari</CardTitle>
+                        <CardTitle className="text-sm font-medium">Total Periode Ini</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
@@ -148,7 +165,9 @@ export function DailyReport({ transactions }: DailyReportProps) {
 
             <Card className="bg-zinc-900 border-zinc-800 text-white">
                 <CardHeader>
-                    <CardTitle>Daftar Transaksi ({selectedDate})</CardTitle>
+                    <CardTitle>
+                        Daftar Transaksi ({startDate === endDate ? new Date(startDate).toLocaleDateString("id-ID", { dateStyle: 'full' }) : `${new Date(startDate).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' })} s/d ${new Date(endDate).toLocaleDateString("id-ID", { dateStyle: 'full' })}`})
+                    </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="rounded-md border border-zinc-800 overflow-x-auto">
@@ -168,7 +187,7 @@ export function DailyReport({ transactions }: DailyReportProps) {
                                             colSpan={4}
                                             className="px-4 py-8 text-center text-muted-foreground"
                                         >
-                                            Tidak ada transaksi pada tanggal ini
+                                            Tidak ada transaksi pada periode ini
                                         </td>
                                     </tr>
                                 ) : (
@@ -177,7 +196,7 @@ export function DailyReport({ transactions }: DailyReportProps) {
                                             <td className="px-4 py-3">
                                                 {new Date(t.created_at).toLocaleTimeString(
                                                     "id-ID",
-                                                    { hour: "2-digit", minute: "2-digit" }
+                                                    { hour: "2-digit", minute: "2-digit", day: "numeric", month: "short" }
                                                 )}
                                             </td>
                                             <td className="px-4 py-3 font-mono text-zinc-400">
