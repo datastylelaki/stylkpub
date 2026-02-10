@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react";
 
 interface UserRoleToggleProps {
     userId: string;
-    initialRole: "admin" | "cashier";
+    initialRole: "admin" | "kasir";
     isCurrentUser: boolean;
 }
 
@@ -25,12 +25,12 @@ export function UserRoleToggle({ userId, initialRole, isCurrentUser }: UserRoleT
             return;
         }
 
-        const newRole = checked ? "admin" : "cashier";
+        const newRole = checked ? "admin" : "kasir";
         setLoading(true);
         try {
             await updateUserRole(userId, newRole);
             setRole(newRole);
-            toast.success(`Role berhasil diubah menjadi ${newRole}`);
+            toast.success(`Role berhasil diubah menjadi ${newRole === "admin" ? "Admin" : "Kasir"}`);
         } catch (error: any) {
             toast.error(error.message || "Gagal mengubah role");
         } finally {

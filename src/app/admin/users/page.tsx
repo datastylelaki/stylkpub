@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/table";
 import { UserRoleToggle } from "@/components/admin/UserRoleToggle";
 import { CreateUserDialog } from "@/components/admin/CreateUserDialog";
-import { ModeToggle } from "@/components/mode-toggle";
+import { EditUserDialog } from "@/components/admin/EditUserDialog";
+import { DeleteUserButton } from "@/components/admin/DeleteUserButton";
 
 export default async function AdminUsersPage() {
     const supabase = await createClient();
@@ -23,7 +24,7 @@ export default async function AdminUsersPage() {
         redirect("/login");
     }
 
-    // Check role using regular client for safety
+    // Check role
     const { data: profile } = await supabase
         .from("profiles")
         .select("*")
@@ -73,7 +74,8 @@ export default async function AdminUsersPage() {
                         <TableRow className="border-border hover:bg-muted/50">
                             <TableHead className="text-muted-foreground">Nama User</TableHead>
                             <TableHead className="text-muted-foreground w-[100px]">Role</TableHead>
-                            <TableHead className="text-right text-muted-foreground">Hak Akses (Admin)</TableHead>
+                            <TableHead className="text-muted-foreground w-[150px]">Hak Akses</TableHead>
+                            <TableHead className="text-right text-muted-foreground w-[100px]">Aksi</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -98,12 +100,27 @@ export default async function AdminUsersPage() {
                                         </div>
                                     )}
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell>
                                     <UserRoleToggle
                                         userId={p.user_id}
                                         initialRole={p.role}
                                         isCurrentUser={p.user_id === user.id}
                                     />
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <div className="flex justify-end gap-1">
+                                        <EditUserDialog
+                                            userId={p.user_id}
+                                            currentName={p.name}
+                                            currentRole={p.role}
+                                            isCurrentUser={p.user_id === user.id}
+                                        />
+                                        <DeleteUserButton
+                                            userId={p.user_id}
+                                            userName={p.name}
+                                            isCurrentUser={p.user_id === user.id}
+                                        />
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -134,6 +151,19 @@ export default async function AdminUsersPage() {
                                         )}
                                     </div>
                                 </div>
+                            </div>
+                            <div className="flex gap-1">
+                                <EditUserDialog
+                                    userId={p.user_id}
+                                    currentName={p.name}
+                                    currentRole={p.role}
+                                    isCurrentUser={p.user_id === user.id}
+                                />
+                                <DeleteUserButton
+                                    userId={p.user_id}
+                                    userName={p.name}
+                                    isCurrentUser={p.user_id === user.id}
+                                />
                             </div>
                         </div>
                         <div className="pt-3 border-t border-border flex items-center justify-between">
