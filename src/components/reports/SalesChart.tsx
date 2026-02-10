@@ -25,10 +25,10 @@ export function SalesChart({ data }: SalesChartProps) {
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => `Rp${value}`}
+                    tickFormatter={(value: any) => `Rp${value}`}
                 />
                 <Tooltip
-                    formatter={(value: number) => [`Rp ${value.toLocaleString("id-ID")}`, "Total"]}
+                    formatter={(value: number | undefined) => value ? [`Rp ${value.toLocaleString("id-ID")}`, "Total"] : ["Rp 0", "Total"]}
                     contentStyle={{ backgroundColor: "#333", border: "none", color: "#fff" }}
                 />
                 <Bar
