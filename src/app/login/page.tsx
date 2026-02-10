@@ -48,14 +48,14 @@ export default function LoginPage() {
 
     if (showWelcome) {
         return (
-            <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center animate-in fade-in duration-500">
-                <div className="w-24 h-24 bg-gradient-to-br from-amber-400 to-amber-600 rounded-3xl flex items-center justify-center mb-6 animate-bounce">
-                    <span className="text-5xl font-bold text-black">S</span>
+            <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center animate-in fade-in duration-500 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-zinc-900 via-zinc-950 to-black px-4 text-center">
+                <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-amber-400 to-amber-600 rounded-3xl flex items-center justify-center mb-6 animate-bounce shadow-lg shadow-amber-500/20">
+                    <span className="text-4xl md:text-5xl font-bold text-black">S</span>
                 </div>
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 animate-in slide-in-from-bottom-5 duration-1000">
+                <h1 className="text-3xl md:text-5xl font-bold text-white mb-2 animate-in slide-in-from-bottom-5 duration-1000 tracking-tight">
                     Welcome to <span className="text-amber-500">STYLK POS</span>
                 </h1>
-                <p className="text-zinc-400 text-lg animate-in slide-in-from-bottom-5 duration-1000 delay-200">
+                <p className="text-zinc-400 text-base md:text-lg animate-in slide-in-from-bottom-5 duration-1000 delay-200">
                     Menyiapkan dashboard anda...
                 </p>
             </div>
