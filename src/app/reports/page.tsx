@@ -41,6 +41,17 @@ export default async function ReportsPage() {
     const cashTransactions = cashTransactionsList.length;
     const qrisTransactions = qrisTransactionsList.length;
 
+    // Calculate Daily Stats (Today) - Using server time for now, ideally should use client time or fixed timezone
+    const today = new Date().toISOString().split('T')[0];
+    const todayTransactions = transactions?.filter(t => t.created_at.startsWith(today)) || [];
+
+    const todayCashTransactions = todayTransactions.filter(t => t.payment_method === 'cash');
+    const todayQrisTransactions = todayTransactions.filter(t => t.payment_method === 'qris');
+
+    const todayTotalRevenue = todayTransactions.reduce((sum, t) => sum + t.total, 0);
+    const todayCashRevenue = todayCashTransactions.reduce((sum, t) => sum + t.total, 0);
+    const todayQrisRevenue = todayQrisTransactions.reduce((sum, t) => sum + t.total, 0);
+
     // Calculate Daily Sales for Chart
     const salesByDate = (transactions || []).reduce((acc: any, t) => {
         const date = new Date(t.created_at).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' });
@@ -199,6 +210,94 @@ export default async function ReportsPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Daily Report Section */}
+            <h3 className="text-xl font-bold tracking-tight mt-8 mb-4">Laporan Hari Ini ({new Date().toLocaleDateString("id-ID", { dateStyle: 'full' })})</h3>
+            <div className="grid gap-4 md:grid-cols-3 mb-6">
+                <Card className="bg-zinc-900 border-zinc-800 text-white">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Hari Ini</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">Rp {todayTotalRevenue.toLocaleString("id-ID")}</div>
+                        <p className="text-xs text-muted-foreground">{todayTransactions.length} transaksi</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-zinc-900 border-zinc-800 text-white">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Cash Hari Ini</CardTitle>
+                        <div className="bg-green-500/20 p-2 rounded-full">
+                            <span className="text-green-500 font-bold text-xs">CASH</span>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-green-500">Rp {todayCashRevenue.toLocaleString("id-ID")}</div>
+                        <p className="text-xs text-muted-foreground">{todayCashTransactions.length} transaksi</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-zinc-900 border-zinc-800 text-white">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">QRIS Hari Ini</CardTitle>
+                        <div className="bg-blue-500/20 p-2 rounded-full">
+                            <span className="text-blue-500 font-bold text-xs">QRIS</span>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-blue-500">Rp {todayQrisRevenue.toLocaleString("id-ID")}</div>
+                        <p className="text-xs text-muted-foreground">{todayQrisTransactions.length} transaksi</p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Daily Transactions Table */}
+            <Card className="bg-zinc-900 border-zinc-800 text-white mb-8">
+                <CardHeader>
+                    <CardTitle>Transaksi Hari Ini</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="rounded-md border border-zinc-800">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-zinc-950 text-zinc-400 uppercase">
+                                <tr>
+                                    <th className="px-4 py-3">Waktu</th>
+                                    <th className="px-4 py-3">ID Transaksi</th>
+                                    <th className="px-4 py-3">Metode</th>
+                                    <th className="px-4 py-3 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-800">
+                                {todayTransactions.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                                            Belum ada transaksi hari ini
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    todayTransactions.map((t) => (
+                                        <tr key={t.id} className="hover:bg-zinc-800/50">
+                                            <td className="px-4 py-3">
+                                                {new Date(t.created_at).toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })}
+                                            </td>
+                                            <td className="px-4 py-3 font-mono text-zinc-400">#{t.id.substring(0, 8)}</td>
+                                            <td className="px-4 py-3">
+                                                <span className={`px-2 py-1 rounded text-xs font-bold ${t.payment_method === 'cash'
+                                                    ? 'bg-green-500/20 text-green-500'
+                                                    : 'bg-blue-500/20 text-blue-500'
+                                                    }`}>
+                                                    {t.payment_method.toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-medium">
+                                                Rp {t.total.toLocaleString("id-ID")}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </CardContent>
+            </Card>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="col-span-4 bg-zinc-900 border-zinc-800 text-white">
