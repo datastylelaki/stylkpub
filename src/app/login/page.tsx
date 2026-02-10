@@ -14,6 +14,7 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [showWelcome, setShowWelcome] = useState(false);
     const router = useRouter();
     const supabase = createClient();
 
@@ -29,17 +30,36 @@ export default function LoginPage() {
 
             if (error) {
                 toast.error(error.message);
+                setLoading(false);
                 return;
             }
 
-            toast.success("Login berhasil!");
-            router.push("/");
-            router.refresh();
+            // Success - Show transition
+            setShowWelcome(true);
+            setTimeout(() => {
+                router.push("/");
+                router.refresh();
+            }, 2000); // Wait for 2 seconds animation
         } catch {
             toast.error("Terjadi kesalahan");
-        } finally {
             setLoading(false);
         }
+    }
+
+    if (showWelcome) {
+        return (
+            <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center animate-in fade-in duration-500">
+                <div className="w-24 h-24 bg-gradient-to-br from-amber-400 to-amber-600 rounded-3xl flex items-center justify-center mb-6 animate-bounce">
+                    <span className="text-5xl font-bold text-black">S</span>
+                </div>
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 animate-in slide-in-from-bottom-5 duration-1000">
+                    Welcome to <span className="text-amber-500">STYLK POS</span>
+                </h1>
+                <p className="text-zinc-400 text-lg animate-in slide-in-from-bottom-5 duration-1000 delay-200">
+                    Menyiapkan dashboard anda...
+                </p>
+            </div>
+        );
     }
 
     return (

@@ -61,23 +61,27 @@ export default function POSDashboard({ user, profile, categories, products }: PO
     }, [cart]);
 
     // Add to cart
-    function addToCart(variant: ProductVariant, product: Product) {
+    function addToCart(variant: ProductVariant, product: Product, quantity: number = 1) {
         setCart((prev) => {
             const existing = prev.find((item) => item.variant.id === variant.id);
             if (existing) {
-                if (existing.quantity >= variant.stock) {
+                if (existing.quantity + quantity > variant.stock) {
                     toast.error("Stok tidak cukup!");
                     return prev;
                 }
                 return prev.map((item) =>
                     item.variant.id === variant.id
-                        ? { ...item, quantity: item.quantity + 1 }
+                        ? { ...item, quantity: item.quantity + quantity }
                         : item
                 );
             }
-            return [...prev, { variant: { ...variant, product }, quantity: 1 }];
+            if (quantity > variant.stock) {
+                toast.error("Stok tidak cukup!");
+                return prev;
+            }
+            return [...prev, { variant: { ...variant, product }, quantity }];
         });
-        toast.success(`${product.name} ditambahkan`);
+        toast.success(`${product.name} ditambahkan (${quantity})`);
     }
 
     // Update quantity
@@ -338,14 +342,18 @@ export default function POSDashboard({ user, profile, categories, products }: PO
     );
 }
 
-// Product Card Component
+import Image from "next/image";
+
+// ... (other imports remain the same)
+
+// Optimized Product Card Component
 function ProductCard({
     product,
     onAddToCart,
     formatRupiah,
 }: {
     product: Product & { variants: ProductVariant[] };
-    onAddToCart: (variant: ProductVariant, product: Product) => void;
+    onAddToCart: (variant: ProductVariant, product: Product, quantity: number) => void;
     formatRupiah: (amount: number) => string;
 }) {
     const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
@@ -377,10 +385,12 @@ function ProductCard({
             {/* Product Image */}
             <div className="aspect-square bg-muted relative">
                 {product.image_url ? (
-                    <img
+                    <Image
                         src={product.image_url}
                         alt={product.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -388,7 +398,7 @@ function ProductCard({
                     </div>
                 )}
                 {selectedVariant && (
-                    <Badge className="absolute top-2 right-2 bg-black/80 text-white text-xs">
+                    <Badge className="absolute top-2 right-2 bg-black/80 text-white text-xs z-10">
                         Stok: {selectedVariant.stock}
                     </Badge>
                 )}
@@ -481,9 +491,7 @@ function ProductCard({
                     disabled={!selectedVariant || selectedVariant.stock === 0}
                     onClick={() => {
                         if (selectedVariant) {
-                            for (let i = 0; i < quantity; i++) {
-                                onAddToCart(selectedVariant, product);
-                            }
+                            onAddToCart(selectedVariant, product, quantity);
                             setQuantity(1);
                         }
                     }}
