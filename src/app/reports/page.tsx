@@ -31,6 +31,16 @@ export default async function ReportsPage() {
     const totalTransactions = transactions?.length || 0;
     const averageBasket = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
 
+    // Calculate Payment Method Stats
+    const cashTransactionsList = transactions?.filter(t => t.payment_method === 'cash') || [];
+    const qrisTransactionsList = transactions?.filter(t => t.payment_method === 'qris') || [];
+
+    const cashRevenue = cashTransactionsList.reduce((sum, t) => sum + t.total, 0);
+    const qrisRevenue = qrisTransactionsList.reduce((sum, t) => sum + t.total, 0);
+
+    const cashTransactions = cashTransactionsList.length;
+    const qrisTransactions = qrisTransactionsList.length;
+
     // Calculate Daily Sales for Chart
     const salesByDate = (transactions || []).reduce((acc: any, t) => {
         const date = new Date(t.created_at).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' });
@@ -157,6 +167,35 @@ export default async function ReportsPage() {
                     <CardContent>
                         <div className="text-2xl font-bold">+573</div>
                         <p className="text-xs text-muted-foreground">+201 sejak jam terakhir</p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Payment Method Breakdown */}
+            <h3 className="text-xl font-bold tracking-tight mt-8 mb-4">Metode Pembayaran</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+                <Card className="bg-zinc-900 border-zinc-800 text-white">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Pembayaran Cash</CardTitle>
+                        <div className="bg-green-500/20 p-2 rounded-full">
+                            <span className="text-green-500 font-bold text-xs">CASH</span>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-green-500">Rp {cashRevenue.toLocaleString("id-ID")}</div>
+                        <p className="text-xs text-muted-foreground">{cashTransactions} transaksi</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-zinc-900 border-zinc-800 text-white">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Pembayaran QRIS</CardTitle>
+                        <div className="bg-blue-500/20 p-2 rounded-full">
+                            <span className="text-blue-500 font-bold text-xs">QRIS</span>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-blue-500">Rp {qrisRevenue.toLocaleString("id-ID")}</div>
+                        <p className="text-xs text-muted-foreground">{qrisTransactions} transaksi</p>
                     </CardContent>
                 </Card>
             </div>
