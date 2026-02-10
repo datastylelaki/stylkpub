@@ -36,13 +36,17 @@ export default async function AdminUsersPage() {
     }
 
     // Fetch all users from profiles using admin client
-    const { data: profiles } = await adminSupabase
+    const { data: profiles, error } = await adminSupabase
         .from("profiles")
         .select("*")
         .order("name");
 
+    if (error) {
+        return <div className="p-8 text-center text-red-500">Gagal memuat data user: {error.message}</div>;
+    }
+
     return (
-        <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
+        <div className="min-h-screen bg-background text-foreground p-4 md:p-8 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold">Manajemen User</h1>
