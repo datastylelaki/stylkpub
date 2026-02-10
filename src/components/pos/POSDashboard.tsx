@@ -351,6 +351,7 @@ function ProductCard({
     const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
         product.variants?.find((v) => v.stock > 0) || null
     );
+    const [quantity, setQuantity] = useState(1);
 
     const availableSizes = [...new Set(product.variants?.map((v) => v.size))];
     const availableColors = [...new Set(
@@ -410,8 +411,8 @@ function ProductCard({
                                     size="sm"
                                     disabled={!hasStock}
                                     onClick={() => handleSizeSelect(size)}
-                                    className={`h-7 px-2 text-xs ${selectedVariant?.size === size
-                                        ? "bg-amber-500 text-black border-amber-500"
+                                    className={`h-7 px-2 text-xs font-semibold ${selectedVariant?.size === size
+                                        ? "bg-amber-500 text-white border-amber-500 hover:bg-amber-600"
                                         : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
                                         }`}
                                 >
@@ -436,8 +437,8 @@ function ProductCard({
                                     size="sm"
                                     disabled={!variant || variant.stock === 0}
                                     onClick={() => handleColorSelect(color)}
-                                    className={`h-7 px-2 text-xs ${selectedVariant?.color === color
-                                        ? "bg-amber-500 text-black border-amber-500"
+                                    className={`h-7 px-2 text-xs font-semibold ${selectedVariant?.color === color
+                                        ? "bg-amber-500 text-white border-amber-500 hover:bg-amber-600"
                                         : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
                                         }`}
                                 >
@@ -448,15 +449,47 @@ function ProductCard({
                     </div>
                 )}
 
+                {/* Quantity Controls */}
+                {selectedVariant && selectedVariant.stock > 0 && (
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 border-border"
+                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                            disabled={quantity <= 1}
+                        >
+                            <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-8 text-center text-foreground font-semibold">{quantity}</span>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 border-border"
+                            onClick={() => setQuantity(Math.min(selectedVariant.stock, quantity + 1))}
+                            disabled={quantity >= selectedVariant.stock}
+                        >
+                            <Plus className="h-3 w-3" />
+                        </Button>
+                    </div>
+                )}
+
                 {/* Add to Cart */}
                 <Button
-                    className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
+                    className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold"
                     size="sm"
                     disabled={!selectedVariant || selectedVariant.stock === 0}
-                    onClick={() => selectedVariant && onAddToCart(selectedVariant, product)}
+                    onClick={() => {
+                        if (selectedVariant) {
+                            for (let i = 0; i < quantity; i++) {
+                                onAddToCart(selectedVariant, product);
+                            }
+                            setQuantity(1);
+                        }
+                    }}
                 >
                     <Plus className="w-4 h-4 mr-1" />
-                    Tambah
+                    Tambah ke Keranjang
                 </Button>
             </div>
         </Card>
