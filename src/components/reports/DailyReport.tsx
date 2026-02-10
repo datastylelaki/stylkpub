@@ -5,9 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Download, Calendar } from "lucide-react";
-import { Database } from "@/types/database";
-
-type Transaction = Database["public"]["Tables"]["transactions"]["Row"];
+import { Transaction } from "@/types/database";
 
 interface DailyReportProps {
     transactions: Transaction[];
@@ -188,8 +186,8 @@ export function DailyReport({ transactions }: DailyReportProps) {
                                             <td className="px-4 py-3">
                                                 <span
                                                     className={`px-2 py-1 rounded text-xs font-bold ${t.payment_method === "cash"
-                                                            ? "bg-green-500/20 text-green-500"
-                                                            : "bg-blue-500/20 text-blue-500"
+                                                        ? "bg-green-500/20 text-green-500"
+                                                        : "bg-blue-500/20 text-blue-500"
                                                         }`}
                                                 >
                                                     {t.payment_method.toUpperCase()}
