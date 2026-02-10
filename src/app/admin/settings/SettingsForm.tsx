@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { Loader2, ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { updateStoreSettings } from "./actions";
-import { InstallPWAButton } from "@/components/InstallPWAButton";
 
 export default function SettingsForm({ initialData }: { initialData: any }) {
     const [loading, setLoading] = useState(false);
@@ -97,14 +96,6 @@ export default function SettingsForm({ initialData }: { initialData: any }) {
                 </div>
             </div>
 
-            {/* PWA Install */}
-            <div className="p-6 rounded-lg border border-border bg-card space-y-4">
-                <h2 className="text-xl font-bold text-amber-500 mb-4">Download Aplikasi</h2>
-                <p className="text-sm text-muted-foreground mb-4">
-                    Install aplikasi POS STYLK di perangkat Anda untuk akses lebih cepat dan pengalaman seperti aplikasi native.
-                </p>
-                <InstallPWAButton />
-            </div>
 
             <div className="flex justify-end">
                 <Button

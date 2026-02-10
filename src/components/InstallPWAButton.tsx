@@ -10,7 +10,11 @@ interface BeforeInstallPromptEvent extends Event {
     userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-export function InstallPWAButton() {
+interface InstallPWAButtonProps {
+    minimal?: boolean;
+}
+
+export function InstallPWAButton({ minimal = false }: InstallPWAButtonProps) {
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [isInstalled, setIsInstalled] = useState(false);
 
@@ -63,6 +67,8 @@ export function InstallPWAButton() {
     };
 
     if (isInstalled) {
+        if (minimal) return null; // Don't show anything in header if installed
+
         return (
             <Button disabled className="w-full bg-green-600 text-white">
                 <Check className="mr-2 h-4 w-4" />
@@ -73,6 +79,20 @@ export function InstallPWAButton() {
 
     if (!deferredPrompt) {
         return null; // Don't show button if can't install
+    }
+
+    if (minimal) {
+        return (
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleInstallClick}
+                className="text-amber-500 hover:text-amber-600 hover:bg-amber-500/10"
+                title="Download Aplikasi (PWA)"
+            >
+                <Download className="h-5 w-5" />
+            </Button>
+        );
     }
 
     return (

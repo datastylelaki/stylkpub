@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { InstallPWAButton } from "@/components/InstallPWAButton";
 import {
     ShoppingCart,
     Search,
@@ -147,6 +148,9 @@ export default function POSDashboard({ user, profile, categories, products }: PO
                     </div>
 
                     <div className="flex items-center gap-2">
+                        {/* PWA Install Button */}
+                        <InstallPWAButton minimal />
+
                         {/* Admin/Settings Button */}
                         {profile?.role === "admin" && (
                             <Link href="/admin/products">
