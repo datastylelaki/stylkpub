@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { Category, Product, ProductVariant, Profile, CartItem } from "@/types/database";
@@ -35,12 +35,40 @@ interface POSDashboardProps {
     products: (Product & { variants: ProductVariant[] })[];
 }
 
-export default function POSDashboard({ user, profile, categories, products }: POSDashboardProps) {
+export default function POSDashboard({ user, profile, categories, products: initialProducts }: POSDashboardProps) {
     const [search, setSearch] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [cart, setCart] = useState<CartItem[]>([]);
     const [checkoutOpen, setCheckoutOpen] = useState(false);
+    const [products, setProducts] = useState(initialProducts);
     const supabase = createClient();
+
+    // Real-time stock updates
+    useEffect(() => {
+        const channel = supabase
+            .channel('product-stock-changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'products'
+                },
+                (payload) => {
+                    // Update product in state when stock changes
+                    setProducts(prev => prev.map(product =>
+                        product.id === payload.new.id
+                            ? { ...product, ...payload.new as any }
+                            : product
+                    ));
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [supabase]);
 
     // Filter products
     const filteredProducts = useMemo(() => {

@@ -68,6 +68,29 @@ export default function CheckoutDialog({
         setLoading(true);
 
         try {
+            // REAL-TIME STOCK VALIDATION: Verify stock before checkout
+            const variantIds = cart.map(item => item.variant.id);
+            const { data: currentVariants, error: stockError } = await supabase
+                .from("product_variants")
+                .select("id, stock")
+                .in("id", variantIds);
+
+            if (stockError) throw stockError;
+
+            // Check if any item in cart exceeds current stock
+            for (const cartItem of cart) {
+                const currentVariant = currentVariants?.find(v => v.id === cartItem.variant.id);
+                if (!currentVariant) {
+                    toast.error(`Produk ${cartItem.variant.product.name} tidak ditemukan`);
+                    setLoading(false);
+                    return;
+                }
+                if (cartItem.quantity > currentVariant.stock) {
+                    toast.error(`Stok ${cartItem.variant.product.name} tidak cukup! Tersisa: ${currentVariant.stock}`);
+                    setLoading(false);
+                    return;
+                }
+            }
             // Create transaction
             const { data: transaction, error: txError } = await supabase
                 .from("transactions")
