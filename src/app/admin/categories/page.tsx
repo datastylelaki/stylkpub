@@ -53,11 +53,7 @@ export default async function AdminCategoriesPage() {
                             <ArrowLeft className="mr-2 h-4 w-4" /> Produk
                         </Button>
                     </Link>
-                    <Link href="/admin/settings" className="flex-1 md:flex-none">
-                        <Button variant="outline" className="text-muted-foreground hover:text-foreground w-full">
-                            Settings
-                        </Button>
-                    </Link>
+
                     <Link href="/admin/categories/new" className="flex-1 md:flex-none">
                         <Button className="bg-amber-500 hover:bg-amber-600 text-black w-full font-bold">
                             <Plus className="mr-2 h-4 w-4" /> Tambah

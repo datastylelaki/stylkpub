@@ -101,7 +101,7 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                         <FormItem>
                             <FormLabel>Nama Produk</FormLabel>
                             <FormControl>
-                                <Input placeholder="Kemeja Keren" {...field} className="bg-zinc-900 border-zinc-800" />
+                                <Input placeholder="Kemeja Keren" {...field} className="bg-background border-input" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -117,11 +117,11 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                                 <FormLabel>Kategori</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
-                                        <SelectTrigger className="bg-zinc-900 border-zinc-800">
+                                        <SelectTrigger className="bg-background border-input">
                                             <SelectValue placeholder="Pilih Kategori" />
                                         </SelectTrigger>
                                     </FormControl>
-                                    <SelectContent className="bg-zinc-900 border-zinc-800">
+                                    <SelectContent className="bg-background border-input">
                                         {categories.map((c) => (
                                             <SelectItem key={c.id} value={c.id}>
                                                 {c.name}
@@ -140,7 +140,7 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                             <FormItem>
                                 <FormLabel>Harga Dasar (Rp)</FormLabel>
                                 <FormControl>
-                                    <Input type="number" placeholder="100000" {...field} className="bg-zinc-900 border-zinc-800" />
+                                    <Input type="number" placeholder="100000" {...field} className="bg-background border-input" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -155,14 +155,14 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                             <img
                                 src={form.watch("image_url")}
                                 alt="Preview"
-                                className="w-20 h-20 object-cover rounded-lg border border-zinc-800"
+                                className="w-20 h-20 object-cover rounded-lg border border-input"
                             />
                         )}
                         <div className="flex-1">
                             <Input
                                 type="file"
                                 accept="image/*"
-                                className="bg-zinc-900 border-zinc-800 cursor-pointer"
+                                className="bg-background border-input cursor-pointer"
                                 onChange={async (e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
@@ -182,7 +182,7 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                                     }
                                 }}
                             />
-                            <p className="text-[10px] text-zinc-500 mt-1">Format: JPG, PNG. Max 5MB.</p>
+                            <p className="text-[10px] text-muted-foreground mt-1">Format: JPG, PNG. Max 5MB.</p>
                         </div>
                     </div>
                 </div>
@@ -201,16 +201,16 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                     </div>
 
                     {fields.map((field, index) => (
-                        <div key={field.id} className="p-4 border border-zinc-800 rounded-lg bg-zinc-900/50 space-y-4 md:space-y-0 md:flex md:gap-4 md:items-end">
+                        <div key={field.id} className="p-4 border border-input rounded-lg bg-muted/50 space-y-4 md:space-y-0 md:flex md:gap-4 md:items-end">
                             <div className="grid grid-cols-2 md:contents gap-4">
                                 <FormField
                                     control={form.control}
                                     name={`variants.${index}.size`}
                                     render={({ field }) => (
                                         <FormItem className="md:flex-1">
-                                            <FormLabel className="text-xs text-zinc-500">Size</FormLabel>
+                                            <FormLabel className="text-xs text-muted-foreground">Size</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="XL" {...field} className="h-10 md:h-8 bg-zinc-950 border-zinc-800 focus:border-amber-500" />
+                                                <Input placeholder="XL" {...field} className="h-10 md:h-8 bg-background border-input focus:border-amber-500" />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -221,9 +221,9 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                                     name={`variants.${index}.color`}
                                     render={({ field }) => (
                                         <FormItem className="md:flex-1">
-                                            <FormLabel className="text-xs text-zinc-500">Warna</FormLabel>
+                                            <FormLabel className="text-xs text-muted-foreground">Warna</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Merah" {...field} className="h-10 md:h-8 bg-zinc-950 border-zinc-800 focus:border-amber-500" />
+                                                <Input placeholder="Merah" {...field} className="h-10 md:h-8 bg-background border-input focus:border-amber-500" />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -236,9 +236,9 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                                     name={`variants.${index}.stock`}
                                     render={({ field }) => (
                                         <FormItem className="flex-1">
-                                            <FormLabel className="text-xs text-zinc-500">Stok</FormLabel>
+                                            <FormLabel className="text-xs text-muted-foreground">Stok</FormLabel>
                                             <FormControl>
-                                                <Input type="number" placeholder="10" {...field} className="h-10 md:h-8 bg-zinc-950 border-zinc-800 focus:border-amber-500" />
+                                                <Input type="number" placeholder="10" {...field} className="h-10 md:h-8 bg-background border-input focus:border-amber-500" />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -249,7 +249,7 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => remove(index)}
-                                    className="h-10 w-10 md:h-8 md:w-8 text-red-500 hover:text-red-400 hover:bg-red-900/20 border border-zinc-800 md:border-none"
+                                    className="h-10 w-10 md:h-8 md:w-8 text-red-500 hover:text-red-400 hover:bg-red-900/20 border border-input md:border-none"
                                     disabled={fields.length === 1}
                                 >
                                     <Trash2 className="h-4 w-4" />

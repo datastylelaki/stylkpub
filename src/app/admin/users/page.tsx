@@ -58,11 +58,7 @@ export default async function AdminUsersPage() {
                             <ArrowLeft className="mr-2 h-4 w-4" /> Produk
                         </Button>
                     </Link>
-                    <Link href="/admin/settings" className="w-full md:w-auto">
-                        <Button variant="outline" className="text-muted-foreground hover:text-foreground w-full">
-                            Settings
-                        </Button>
-                    </Link>
+
                     <CreateUserDialog />
                 </div>
             </div>

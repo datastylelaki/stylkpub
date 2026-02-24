@@ -88,11 +88,7 @@ export default async function AdminProductsPage({
                                 Import
                             </Button>
                         </Link>
-                        <Link href="/admin/settings" className="flex-1 md:flex-none">
-                            <Button variant="outline" className="text-muted-foreground hover:text-foreground w-full">
-                                Settings
-                            </Button>
-                        </Link>
+
                         <Link href="/admin/products/new" className="w-full md:w-auto">
                             <Button className="bg-amber-500 hover:bg-amber-600 text-black w-full font-bold">
                                 <Plus className="mr-2 h-4 w-4" /> Produk
@@ -100,97 +96,97 @@ export default async function AdminProductsPage({
                         </Link>
                     </div>
                 </div>
+            </div>
 
-                {/* Desktop View */}
-                <div className="hidden md:block rounded-md border border-border bg-card">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="border-border hover:bg-muted/50">
-                                <TableHead className="text-muted-foreground">Nama Produk</TableHead>
-                                <TableHead className="text-muted-foreground">Kategori</TableHead>
-                                <TableHead className="text-muted-foreground">Harga Dasar</TableHead>
-                                <TableHead className="text-muted-foreground">Total Stok</TableHead>
-                                <TableHead className="text-right text-muted-foreground">Aksi</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {products?.map((product) => {
-                                const totalStock = product.variants?.reduce((sum: number, v: any) => sum + v.stock, 0) || 0;
-                                return (
-                                    <TableRow key={product.id} className="border-border hover:bg-muted/50">
-                                        <TableCell className="font-medium text-amber-500">{product.name}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline" className="border-border text-muted-foreground">
-                                                {product.category?.name || "-"}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>Rp {product.base_price.toLocaleString("id-ID")}</TableCell>
-                                        <TableCell>{totalStock}</TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <Link href={`/admin/products/${product.id}/edit`}>
-                                                    <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-100/20 dark:hover:bg-blue-900/20">
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
-                                                </Link>
-                                                <DeleteProductButton productId={product.id} />
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                )
-                            })}
-                            {(!products || products.length === 0) && (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                                        Belum ada produk.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                {/* Mobile View */}
-                <div className="md:hidden space-y-4">
-                    {products?.map((product) => {
-                        const totalStock = product.variants?.reduce((sum: number, v: any) => sum + v.stock, 0) || 0;
-                        return (
-                            <div key={product.id} className="p-4 rounded-lg border border-border bg-card space-y-3">
-                                <div className="flex items-start justify-between">
-                                    <div>
-                                        <h3 className="font-bold text-lg text-amber-500">{product.name}</h3>
-                                        <Badge variant="outline" className="mt-1 border-border text-muted-foreground">
+            {/* Desktop View */}
+            <div className="hidden md:block rounded-md border border-border bg-card">
+                <Table>
+                    <TableHeader>
+                        <TableRow className="border-border hover:bg-muted/50">
+                            <TableHead className="text-muted-foreground">Nama Produk</TableHead>
+                            <TableHead className="text-muted-foreground">Kategori</TableHead>
+                            <TableHead className="text-muted-foreground">Harga Dasar</TableHead>
+                            <TableHead className="text-muted-foreground">Total Stok</TableHead>
+                            <TableHead className="text-right text-muted-foreground">Aksi</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {products?.map((product) => {
+                            const totalStock = product.variants?.reduce((sum: number, v: any) => sum + v.stock, 0) || 0;
+                            return (
+                                <TableRow key={product.id} className="border-border hover:bg-muted/50">
+                                    <TableCell className="font-medium text-amber-500">{product.name}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className="border-border text-muted-foreground">
                                             {product.category?.name || "-"}
                                         </Badge>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Link href={`/admin/products/${product.id}/edit`}>
-                                            <Button size="icon" variant="ghost" className="h-9 w-9 text-blue-500 border border-border">
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                        </Link>
-                                        <DeleteProductButton productId={product.id} />
-                                    </div>
+                                    </TableCell>
+                                    <TableCell>Rp {product.base_price.toLocaleString("id-ID")}</TableCell>
+                                    <TableCell>{totalStock}</TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <Link href={`/admin/products/${product.id}/edit`}>
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-100/20 dark:hover:bg-blue-900/20">
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            </Link>
+                                            <DeleteProductButton productId={product.id} />
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        })}
+                        {(!products || products.length === 0) && (
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                    Belum ada produk.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+
+            {/* Mobile View */}
+            <div className="md:hidden space-y-4">
+                {products?.map((product) => {
+                    const totalStock = product.variants?.reduce((sum: number, v: any) => sum + v.stock, 0) || 0;
+                    return (
+                        <div key={product.id} className="p-4 rounded-lg border border-border bg-card space-y-3">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <h3 className="font-bold text-lg text-amber-500">{product.name}</h3>
+                                    <Badge variant="outline" className="mt-1 border-border text-muted-foreground">
+                                        {product.category?.name || "-"}
+                                    </Badge>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 text-sm pt-2 border-t border-border">
-                                    <div>
-                                        <p className="text-muted-foreground">Harga Dasar</p>
-                                        <p className="font-medium">Rp {product.base_price.toLocaleString("id-ID")}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-muted-foreground">Total Stok</p>
-                                        <p className="font-medium">{totalStock}</p>
-                                    </div>
+                                <div className="flex gap-2">
+                                    <Link href={`/admin/products/${product.id}/edit`}>
+                                        <Button size="icon" variant="ghost" className="h-9 w-9 text-blue-500 border border-border">
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                    </Link>
+                                    <DeleteProductButton productId={product.id} />
                                 </div>
                             </div>
-                        );
-                    })}
-                    {(!products || products.length === 0) && (
-                        <div className="p-8 text-center text-muted-foreground border border-dashed border-border rounded-lg">
-                            Belum ada produk.
+                            <div className="grid grid-cols-2 gap-2 text-sm pt-2 border-t border-border">
+                                <div>
+                                    <p className="text-muted-foreground">Harga Dasar</p>
+                                    <p className="font-medium">Rp {product.base_price.toLocaleString("id-ID")}</p>
+                                </div>
+                                <div>
+                                    <p className="text-muted-foreground">Total Stok</p>
+                                    <p className="font-medium">{totalStock}</p>
+                                </div>
+                            </div>
                         </div>
-                    )}
-                </div>
+                    );
+                })}
+                {(!products || products.length === 0) && (
+                    <div className="p-8 text-center text-muted-foreground border border-dashed border-border rounded-lg">
+                        Belum ada produk.
+                    </div>
+                )}
             </div>
         </div>
     );
