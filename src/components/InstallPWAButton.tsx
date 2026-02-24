@@ -17,15 +17,21 @@ interface InstallPWAButtonProps {
 export function InstallPWAButton({ minimal = false }: InstallPWAButtonProps) {
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [isInstalled, setIsInstalled] = useState(false);
+    const [isIOS, setIsIOS] = useState(false);
 
     useEffect(() => {
-        // Check if already installed
-        if (window.matchMedia("(display-mode: standalone)").matches) {
+        // Detect iOS device
+        const userAgent = window.navigator.userAgent.toLowerCase();
+        const isIOSDevice = /iphone|ipad|ipod/.test(userAgent) || (userAgent.includes("mac") && "ontouchend" in document);
+        setIsIOS(isIOSDevice);
+
+        // Check if already installed (standalone mode starts on both Android and iOS)
+        if (window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone) {
             setIsInstalled(true);
             return;
         }
 
-        // Listen for install prompt
+        // Listen for install prompt (Non-iOS only)
         const handler = (e: Event) => {
             e.preventDefault();
             setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -46,12 +52,21 @@ export function InstallPWAButton({ minimal = false }: InstallPWAButtonProps) {
     }, []);
 
     const handleInstallClick = async () => {
+        if (isIOS) {
+            // iOS manual install instructions via toast
+            toast("Cara Install di iOS / iPad", {
+                description: "1. Tap ikon Share (kotak dengan panah ke atas) di menu browser.\n2. Scroll ke bawah dan pilih 'Add to Home Screen'.\n3. Tap 'Add' di pojok kanan atas.",
+                duration: 8000,
+            });
+            return;
+        }
+
         if (!deferredPrompt) {
             toast.error("Browser tidak support PWA install atau sudah terinstall.");
             return;
         }
 
-        // Show install prompt
+        // Show install prompt (Android/Chrome/Edge)
         deferredPrompt.prompt();
 
         // Wait for user choice
@@ -77,8 +92,9 @@ export function InstallPWAButton({ minimal = false }: InstallPWAButtonProps) {
         );
     }
 
-    if (!deferredPrompt) {
-        return null; // Don't show button if can't install
+    // Hide button if not iOS AND the native install prompt is unavailable
+    if (!deferredPrompt && !isIOS) {
+        return null;
     }
 
     if (minimal) {
