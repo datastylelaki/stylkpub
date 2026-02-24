@@ -443,53 +443,58 @@ function ProductCard({
                 <h3 className="font-medium text-foreground text-sm line-clamp-2">{product.name}</h3>
                 <p className="text-amber-500 font-bold">{formatRupiah(product.base_price)}</p>
 
-                {/* Size Selector */}
-                {availableSizes.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                        {availableSizes.map((size) => {
-                            const hasStock = product.variants?.some((v) => v.size === size && v.stock > 0);
-                            return (
-                                <Button
-                                    key={size}
-                                    variant={selectedVariant?.size === size ? "default" : "outline"}
-                                    size="sm"
-                                    disabled={!hasStock}
-                                    onClick={() => handleSizeSelect(size)}
-                                    className={`h-7 px-2 text-xs font-semibold ${selectedVariant?.size === size
-                                        ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
-                                        : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
-                                        }`}
-                                >
-                                    {size}
-                                </Button>
-                            );
-                        })}
-                    </div>
-                )}
+                {/* Variant Selectors Wrapper */}
+                {(availableSizes.length > 0 || (selectedVariant && availableColors.length > 1)) && (
+                    <div className="bg-muted/30 p-2 rounded-md space-y-2">
+                        {/* Size Selector */}
+                        {availableSizes.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                                {availableSizes.map((size) => {
+                                    const hasStock = product.variants?.some((v) => v.size === size && v.stock > 0);
+                                    return (
+                                        <Button
+                                            key={size}
+                                            variant={selectedVariant?.size === size ? "default" : "outline"}
+                                            size="sm"
+                                            disabled={!hasStock}
+                                            onClick={() => handleSizeSelect(size)}
+                                            className={`h-7 px-2 text-xs font-semibold ${selectedVariant?.size === size
+                                                ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-white dark:border-amber-500"
+                                                : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                }`}
+                                        >
+                                            {size}
+                                        </Button>
+                                    );
+                                })}
+                            </div>
+                        )}
 
-                {/* Color Selector */}
-                {selectedVariant && availableColors.length > 1 && (
-                    <div className="flex flex-wrap gap-1">
-                        {availableColors.map((color) => {
-                            const variant = product.variants?.find(
-                                (v) => v.size === selectedVariant.size && v.color === color
-                            );
-                            return (
-                                <Button
-                                    key={color}
-                                    variant={selectedVariant?.color === color ? "default" : "outline"}
-                                    size="sm"
-                                    disabled={!variant || variant.stock === 0}
-                                    onClick={() => handleColorSelect(color)}
-                                    className={`h-7 px-2 text-xs font-semibold ${selectedVariant?.color === color
-                                        ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
-                                        : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
-                                        }`}
-                                >
-                                    {color}
-                                </Button>
-                            );
-                        })}
+                        {/* Color Selector */}
+                        {selectedVariant && availableColors.length > 1 && (
+                            <div className="flex flex-wrap gap-1">
+                                {availableColors.map((color) => {
+                                    const variant = product.variants?.find(
+                                        (v) => v.size === selectedVariant.size && v.color === color
+                                    );
+                                    return (
+                                        <Button
+                                            key={color}
+                                            variant={selectedVariant?.color === color ? "default" : "outline"}
+                                            size="sm"
+                                            disabled={!variant || variant.stock === 0}
+                                            onClick={() => handleColorSelect(color)}
+                                            className={`h-7 px-2 text-xs font-semibold ${selectedVariant?.color === color
+                                                ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-white dark:border-amber-500"
+                                                : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                }`}
+                                        >
+                                            {color}
+                                        </Button>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -530,9 +535,8 @@ function ProductCard({
                         }
                     }}
                 >
-                    <Plus className="w-4 h-4 mr-1" />
-                    <span className="hidden xl:inline">Tambah ke Keranjang</span>
-                    <span className="xl:hidden">Tambah</span>
+                    <Plus className="w-4 h-4 mr-1 shrink-0" />
+                    <span className="truncate">Tambah ke Keranjang</span>
                 </Button>
             </div>
         </Card>
