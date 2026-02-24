@@ -451,12 +451,12 @@ function ProductCard({
                             return (
                                 <Button
                                     key={size}
-                                    variant="outline"
+                                    variant={selectedVariant?.size === size ? "default" : "outline"}
                                     size="sm"
                                     disabled={!hasStock}
                                     onClick={() => handleSizeSelect(size)}
                                     className={`h-7 px-2 text-xs font-semibold ${selectedVariant?.size === size
-                                        ? "bg-amber-500 text-white border-amber-500 hover:bg-amber-600"
+                                        ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
                                         : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
                                         }`}
                                 >
@@ -477,12 +477,12 @@ function ProductCard({
                             return (
                                 <Button
                                     key={color}
-                                    variant="outline"
+                                    variant={selectedVariant?.color === color ? "default" : "outline"}
                                     size="sm"
                                     disabled={!variant || variant.stock === 0}
                                     onClick={() => handleColorSelect(color)}
                                     className={`h-7 px-2 text-xs font-semibold ${selectedVariant?.color === color
-                                        ? "bg-amber-500 text-white border-amber-500 hover:bg-amber-600"
+                                        ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
                                         : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
                                         }`}
                                 >
@@ -531,8 +531,8 @@ function ProductCard({
                     }}
                 >
                     <Plus className="w-4 h-4 mr-1" />
-                    <span className="hidden sm:inline">Tambah ke Keranjang</span>
-                    <span className="sm:hidden">Tambah</span>
+                    <span className="hidden xl:inline">Tambah ke Keranjang</span>
+                    <span className="xl:hidden">Tambah</span>
                 </Button>
             </div>
         </Card>
