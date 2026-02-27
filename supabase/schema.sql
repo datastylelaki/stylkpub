@@ -100,6 +100,7 @@ CREATE TABLE store_settings (
   store_name TEXT DEFAULT 'STYLK',
   store_address TEXT,
   store_phone TEXT,
+  receipt_footer TEXT,
   qris_image_url TEXT,
   bank_name TEXT DEFAULT 'BCA',
   bank_account TEXT,
