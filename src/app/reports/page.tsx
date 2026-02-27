@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { DeleteSalesDataButton } from "@/components/reports/DeleteSalesDataButton";
 
 export default async function ReportsPage() {
     const supabase = await createClient();
@@ -82,7 +81,6 @@ export default async function ReportsPage() {
             <div className="flex items-center justify-between space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">Dashboard & Laporan</h2>
                 <div className="flex items-center space-x-2">
-                    <DeleteSalesDataButton />
                     <Link href="/">
                         <Button variant="outline" className="text-white hover:text-white bg-transparent border-zinc-700 hover:bg-zinc-800">
                             <ArrowLeft className="mr-2 h-4 w-4" /> Kembali ke POS
