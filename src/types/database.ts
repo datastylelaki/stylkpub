@@ -42,6 +42,8 @@ export interface Transaction {
     payment_method: 'cash' | 'qris';
     cash_received: number;
     change_amount: number;
+    discount: number;
+    discount_label: string | null; // JSON array string, e.g. '["Rp10.000","Free Kaos"]'
     notes: string | null;
     created_at: string;
     cashier?: Profile;
@@ -68,6 +70,7 @@ export interface StoreSettings {
     bank_account: string | null;
     bank_holder: string | null;
     receipt_footer: string | null;
+    marketing_budget: number;
     updated_at: string;
 }
 
