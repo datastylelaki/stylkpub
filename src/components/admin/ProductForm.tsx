@@ -213,9 +213,18 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                                     render={({ field }) => (
                                         <FormItem className="md:flex-1">
                                             <FormLabel className="text-xs text-muted-foreground">Size</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="XL" {...field} className="h-10 md:h-8 bg-background border-input focus:border-amber-500" />
-                                            </FormControl>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger className="h-10 md:h-8 bg-background border-input">
+                                                        <SelectValue placeholder="Pilih Size" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent className="bg-background border-input">
+                                                    {["S", "M", "L", "XL", "XXL", "XXXL"].map((size) => (
+                                                        <SelectItem key={size} value={size}>{size}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                             <FormMessage />
                                         </FormItem>
                                     )}

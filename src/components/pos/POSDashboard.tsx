@@ -465,7 +465,13 @@ function ProductCard({
     );
     const [quantity, setQuantity] = useState(1);
 
-    const availableSizes = [...new Set(product.variants?.map((v) => v.size))];
+    const SIZE_ORDER = ["S", "M", "L", "XL", "XXL", "XXXL"];
+    const availableSizes = [...new Set(product.variants?.map((v) => v.size))]
+        .sort((a, b) => {
+            const indexA = SIZE_ORDER.indexOf(a);
+            const indexB = SIZE_ORDER.indexOf(b);
+            return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+        });
     const availableColors = [...new Set(
         product.variants
             ?.filter((v) => !selectedVariant || v.size === selectedVariant.size)
