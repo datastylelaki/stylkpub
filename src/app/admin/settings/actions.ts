@@ -31,6 +31,7 @@ export async function saveStoreSettings(data: {
     const adminSupabase = createAdminClient();
 
     if (data.id) {
+        // Update existing row
         const { error } = await adminSupabase
             .from("store_settings")
             .update({
@@ -38,14 +39,16 @@ export async function saveStoreSettings(data: {
                 store_address: data.store_address,
                 store_phone: data.store_phone,
                 receipt_footer: data.receipt_footer,
+                updated_at: new Date().toISOString(),
             })
             .eq("id", data.id);
 
         if (error) {
             console.error("Error updating store settings:", error);
-            throw new Error("Failed to update settings: " + error.message);
+            throw new Error(error.message);
         }
     } else {
+        // Insert new row — include all required fields
         const { error } = await adminSupabase
             .from("store_settings")
             .insert({
@@ -53,11 +56,12 @@ export async function saveStoreSettings(data: {
                 store_address: data.store_address,
                 store_phone: data.store_phone,
                 receipt_footer: data.receipt_footer,
+                bank_name: "",
             });
 
         if (error) {
             console.error("Error creating store settings:", error);
-            throw new Error("Failed to create settings: " + error.message);
+            throw new Error(error.message);
         }
     }
 

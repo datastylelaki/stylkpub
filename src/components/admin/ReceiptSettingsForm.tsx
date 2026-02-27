@@ -39,9 +39,9 @@ export function ReceiptSettingsForm({ settings, profile }: ReceiptSettingsFormPr
             });
 
             toast.success("Pengaturan berhasil disimpan!");
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            toast.error("Gagal menyimpan pengaturan");
+            toast.error(error?.message || "Gagal menyimpan pengaturan");
         } finally {
             setLoading(false);
         }
