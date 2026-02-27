@@ -67,6 +67,7 @@ export interface StoreSettings {
     bank_name: string;
     bank_account: string | null;
     bank_holder: string | null;
+    receipt_footer: string | null;
     updated_at: string;
 }
 

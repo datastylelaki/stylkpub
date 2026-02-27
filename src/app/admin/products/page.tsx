@@ -88,6 +88,11 @@ export default async function AdminProductsPage({
                                 Import
                             </Button>
                         </Link>
+                        <Link href="/admin/settings" className="flex-1 md:flex-none">
+                            <Button variant="outline" className="text-green-500 hover:text-green-600 w-full">
+                                Struk
+                            </Button>
+                        </Link>
 
                         <Link href="/admin/products/new" className="w-full md:w-auto">
                             <Button className="bg-amber-500 hover:bg-amber-600 text-black w-full font-bold">

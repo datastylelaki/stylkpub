@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { CartItem, Profile } from "@/types/database";
+import { CartItem, Profile, StoreSettings } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,8 @@ import {
     Printer,
     MessageCircle
 } from "lucide-react";
+import { usePrinter } from "@/components/PrinterProvider";
+import type { ReceiptData } from "@/lib/thermal-printer";
 
 interface CheckoutDialogProps {
     open: boolean;
@@ -49,7 +51,15 @@ export default function CheckoutDialog({
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [transactionId, setTransactionId] = useState<string | null>(null);
+    const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null);
     const supabase = createClient();
+    const { connected: printerConnected, printing, print } = usePrinter();
+
+    useEffect(() => {
+        supabase.from("store_settings").select("*").single().then(({ data }) => {
+            if (data) setStoreSettings(data);
+        });
+    }, [supabase]);
 
     const changeAmount = paymentMethod === "cash"
         ? Math.max(0, Number(cashReceived) - total)
@@ -144,9 +154,39 @@ export default function CheckoutDialog({
         onOpenChange(false);
     }
 
-    function handlePrint() {
-        // TODO: Implement thermal print
-        toast.info("Fitur cetak struk akan segera hadir");
+    async function handlePrint() {
+        if (!printerConnected) {
+            toast.error("Printer belum terhubung. Hubungkan printer di menu atas.");
+            return;
+        }
+
+        const receiptData: ReceiptData = {
+            storeName: storeSettings?.store_name || "STYLK",
+            storeAddress: storeSettings?.store_address || undefined,
+            storePhone: storeSettings?.store_phone || undefined,
+            receiptFooter: storeSettings?.receipt_footer || undefined,
+            items: cart.map((item) => ({
+                name: item.variant.product.name,
+                variantInfo: `${item.variant.size} / ${item.variant.color}`,
+                quantity: item.quantity,
+                price: item.variant.product.base_price,
+            })),
+            total,
+            paymentMethod,
+            cashReceived: paymentMethod === "cash" ? Number(cashReceived) : undefined,
+            changeAmount: paymentMethod === "cash" ? changeAmount : undefined,
+            cashierName: profile?.name || "Kasir",
+            transactionId: transactionId || "-",
+            date: new Date(),
+        };
+
+        try {
+            await print(receiptData);
+            toast.success("Struk berhasil dicetak!");
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : "Gagal mencetak struk";
+            toast.error(msg);
+        }
     }
 
     function handleWhatsApp() {
@@ -193,10 +233,15 @@ export default function CheckoutDialog({
                             <Button
                                 variant="outline"
                                 onClick={handlePrint}
-                                className="border-zinc-700 bg-zinc-800"
+                                disabled={printing}
+                                className={`border-zinc-700 bg-zinc-800 ${printerConnected ? "" : "opacity-60"}`}
                             >
-                                <Printer className="w-4 h-4 mr-2" />
-                                Cetak Struk
+                                {printing ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                    <Printer className="w-4 h-4 mr-2" />
+                                )}
+                                {printing ? "Mencetak..." : "Cetak Struk"}
                             </Button>
                             <Button
                                 variant="outline"

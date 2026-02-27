@@ -22,11 +22,15 @@ import {
     User as UserIcon,
     Package,
     BarChart3,
-    Settings
+    Settings,
+    BluetoothConnected,
+    Loader2,
+    BluetoothOff
 } from "lucide-react";
 import Link from "next/link";
 import CheckoutDialog from "./CheckoutDialog";
 import { ModeToggle } from "@/components/mode-toggle";
+import { usePrinter } from "@/components/PrinterProvider";
 
 interface POSDashboardProps {
     user: User;
@@ -42,6 +46,7 @@ export default function POSDashboard({ user, profile, categories, products: init
     const [checkoutOpen, setCheckoutOpen] = useState(false);
     const [products, setProducts] = useState(initialProducts);
     const supabase = createClient();
+    const { connected: printerConnected, connecting: printerConnecting, bluetoothSupported, connect: connectBT, disconnect: disconnectBT, deviceName } = usePrinter();
 
     // Real-time stock updates
     useEffect(() => {
@@ -176,6 +181,42 @@ export default function POSDashboard({ user, profile, categories, products: init
                     </div>
 
                     <div className="flex items-center gap-2">
+                        {/* Printer Bluetooth Button */}
+                        {bluetoothSupported && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                title={printerConnected ? `Printer: ${deviceName || "Terhubung"}` : "Hubungkan Printer"}
+                                onClick={async () => {
+                                    if (printerConnected) {
+                                        disconnectBT();
+                                        toast.info("Printer terputus");
+                                    } else {
+                                        try {
+                                            await connectBT();
+                                            toast.success("Printer terhubung!");
+                                        } catch (error) {
+                                            const msg = error instanceof Error ? error.message : "Gagal terhubung";
+                                            toast.error(msg);
+                                        }
+                                    }
+                                }}
+                                disabled={printerConnecting}
+                                className={printerConnected
+                                    ? "text-green-500 hover:text-green-400"
+                                    : "text-muted-foreground hover:text-foreground"
+                                }
+                            >
+                                {printerConnecting ? (
+                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                ) : printerConnected ? (
+                                    <BluetoothConnected className="h-5 w-5" />
+                                ) : (
+                                    <BluetoothOff className="h-5 w-5" />
+                                )}
+                            </Button>
+                        )}
+
                         {/* PWA Install Button */}
                         <InstallPWAButton minimal />
 

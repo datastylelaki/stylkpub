@@ -28,8 +28,7 @@ export const viewport: Viewport = {
 };
 
 import { ThemeProvider } from "@/components/theme-provider";
-
-// ... existing imports
+import { PrinterProvider } from "@/components/PrinterProvider";
 
 export default function RootLayout({
   children,
@@ -48,7 +47,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <PrinterProvider>
+            {children}
+          </PrinterProvider>
           <Toaster position="bottom-center" richColors />
         </ThemeProvider>
       </body>
