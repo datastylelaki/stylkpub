@@ -24,7 +24,7 @@ export default async function AdminSettingsPage() {
     const { data: settings } = await supabase
         .from("store_settings")
         .select("*")
-        .single();
+        .maybeSingle();
 
     return (
         <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
