@@ -26,25 +26,25 @@ export async function deleteSalesData(password: string) {
         return { success: false, error: "Tindakan ini hanya untuk Admin" };
     }
 
-    // Delete transaction items and transactions
+    // Delete transaction items first (foreign key dependency)
     const { error: itemsError } = await supabase
         .from("transaction_items")
         .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000");
+        .gte("created_at", "1970-01-01");
 
     if (itemsError) {
         console.error("Error deleting transaction items:", itemsError);
-        return { success: false, error: itemsError.message };
+        return { success: false, error: `Gagal hapus item: ${itemsError.message}. Pastikan RLS DELETE policy sudah ditambahkan.` };
     }
 
     const { error: transError } = await supabase
         .from("transactions")
         .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000");
+        .gte("created_at", "1970-01-01");
 
     if (transError) {
         console.error("Error deleting transactions:", transError);
-        return { success: false, error: transError.message };
+        return { success: false, error: `Gagal hapus transaksi: ${transError.message}. Pastikan RLS DELETE policy sudah ditambahkan.` };
     }
 
     revalidatePath("/reports");

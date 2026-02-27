@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { DeleteProductButton } from "@/components/admin/DeleteProductButton";
 import { ModeToggle } from "@/components/mode-toggle";
+import { InstallPWAButton } from "@/components/InstallPWAButton";
 
 import { ProductSearchInput } from "@/components/admin/ProductSearchInput";
 
@@ -99,6 +100,7 @@ export default async function AdminProductsPage({
                             </Button>
                         </Link>
                     </div>
+                    <InstallPWAButton />
                 </div>
             </div>
 

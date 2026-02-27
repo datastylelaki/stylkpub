@@ -35,8 +35,9 @@ export function DeleteSalesDataButton() {
                 toast.success("Data penjualan berhasil dihapus");
                 setOpen(false);
                 setPassword("");
+                window.location.reload();
             } else {
-                toast.error(result.error);
+                toast.error(result.error || "Gagal menghapus data");
             }
         } catch (error) {
             toast.error("Terjadi kesalahan sistem");
@@ -48,9 +49,8 @@ export function DeleteSalesDataButton() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="destructive" className="bg-red-600 hover:bg-red-700 text-white">
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Hapus Data Penjualan
+                <Button variant="destructive" size="icon" className="bg-red-600 hover:bg-red-700 text-white" title="Hapus Data Penjualan">
+                    <Trash2 className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] bg-zinc-950 border-zinc-800 text-white">

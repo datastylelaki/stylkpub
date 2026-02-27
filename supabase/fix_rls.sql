@@ -23,3 +23,9 @@ CREATE POLICY "Admin can modify categories" ON categories FOR ALL USING (is_admi
 CREATE POLICY "Admin can modify products" ON products FOR ALL USING (is_admin());
 CREATE POLICY "Admin can modify variants" ON product_variants FOR ALL USING (is_admin());
 CREATE POLICY "Admin can modify settings" ON store_settings FOR ALL USING (is_admin());
+
+-- 4. Add DELETE policies for transactions (missing from original schema)
+DROP POLICY IF EXISTS "Admin can delete transactions" ON transactions;
+DROP POLICY IF EXISTS "Admin can delete transaction items" ON transaction_items;
+CREATE POLICY "Admin can delete transactions" ON transactions FOR DELETE USING (is_admin());
+CREATE POLICY "Admin can delete transaction items" ON transaction_items FOR DELETE USING (is_admin());
