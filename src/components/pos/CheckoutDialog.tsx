@@ -20,7 +20,7 @@ import {
     Loader2,
     CheckCircle2,
     Printer,
-    MessageCircle
+    Tag,
 } from "lucide-react";
 import { usePrinter } from "@/components/PrinterProvider";
 import type { ReceiptData } from "@/lib/thermal-printer";
@@ -71,13 +71,14 @@ export default function CheckoutDialog({
         if (total < TEBUS_MIN) setTebusQty(0);
     }, [total]);
 
-    const changeAmount = paymentMethod === "cash"
-        ? Math.max(0, Number(cashReceived) - total)
-        : 0;
     const grandTotal = total + tebusQty * TEBUS_HARGA;
 
+    const changeAmount = paymentMethod === "cash"
+        ? Math.max(0, Number(cashReceived) - grandTotal)
+        : 0;
+
     const canProceed = paymentMethod === "cash"
-        ? Number(cashReceived) >= total
+        ? Number(cashReceived) >= grandTotal
         : true;
 
     async function handleCheckout() {
@@ -112,14 +113,15 @@ export default function CheckoutDialog({
                     return;
                 }
             }
+
             // Create transaction
             const { data: transaction, error: txError } = await supabase
                 .from("transactions")
                 .insert({
                     cashier_id: profile.id,
-                    total,
+                    total: grandTotal,
                     payment_method: paymentMethod,
-                    cash_received: paymentMethod === "cash" ? Number(cashReceived) : total,
+                    cash_received: paymentMethod === "cash" ? Number(cashReceived) : grandTotal,
                     change_amount: changeAmount,
                 })
                 .select()
@@ -127,8 +129,15 @@ export default function CheckoutDialog({
 
             if (txError) throw txError;
 
-            // Create transaction items
-            const items = cart.map((item) => ({
+            // Build transaction items
+            const items: {
+                transaction_id: string;
+                variant_id: string | null;
+                product_name: string;
+                variant_info: string | null;
+                quantity: number;
+                price: number;
+            }[] = cart.map((item) => ({
                 transaction_id: transaction.id,
                 variant_id: item.variant.id,
                 product_name: item.variant.product.name,
@@ -136,6 +145,17 @@ export default function CheckoutDialog({
                 quantity: item.quantity,
                 price: item.variant.product.base_price,
             }));
+
+            if (tebusQty > 0) {
+                items.push({
+                    transaction_id: transaction.id,
+                    variant_id: null,
+                    product_name: "Tebus Murah",
+                    variant_info: null,
+                    quantity: tebusQty,
+                    price: TEBUS_HARGA,
+                });
+            }
 
             const { error: itemsError } = await supabase
                 .from("transaction_items")
@@ -173,7 +193,6 @@ export default function CheckoutDialog({
     }
 
     async function handlePrint() {
-        // Auto-connect if not connected
         if (!printerConnected) {
             try {
                 toast.info("Menghubungkan printer...");
@@ -191,13 +210,21 @@ export default function CheckoutDialog({
             storeAddress: storeSettings?.store_address || undefined,
             storePhone: storeSettings?.store_phone || undefined,
             receiptFooter: storeSettings?.receipt_footer || undefined,
-            items: cart.map((item) => ({
-                name: item.variant.product.name,
-                variantInfo: `${item.variant.size} / ${item.variant.color}`,
-                quantity: item.quantity,
-                price: item.variant.product.base_price,
-            })),
-            total,
+            items: [
+                ...cart.map((item) => ({
+                    name: item.variant.product.name,
+                    variantInfo: `${item.variant.size} / ${item.variant.color}`,
+                    quantity: item.quantity,
+                    price: item.variant.product.base_price,
+                })),
+                ...(tebusQty > 0 ? [{
+                    name: "Tebus Murah",
+                    variantInfo: null,
+                    quantity: tebusQty,
+                    price: TEBUS_HARGA,
+                }] : []),
+            ],
+            total: grandTotal,
             paymentMethod,
             cashReceived: paymentMethod === "cash" ? Number(cashReceived) : undefined,
             changeAmount: paymentMethod === "cash" ? changeAmount : undefined,
@@ -213,25 +240,6 @@ export default function CheckoutDialog({
             const msg = error instanceof Error ? error.message : "Gagal mencetak struk";
             toast.error(msg);
         }
-    }
-
-    function handleWhatsApp() {
-        const lines = [
-            "🛍️ *STYLK Fashion*",
-            "------------------------",
-            ...cart.map(
-                (item) =>
-                    `${item.variant.product.name} (${item.variant.size}/${item.variant.color}) x${item.quantity} = ${formatRupiah(item.variant.product.base_price * item.quantity)}`
-            ),
-            "------------------------",
-            `*Total: ${formatRupiah(total)}*`,
-            `Bayar: ${paymentMethod.toUpperCase()}`,
-            "",
-            "Terima kasih telah berbelanja di STYLK! 🙏",
-        ];
-
-        const text = encodeURIComponent(lines.join("\n"));
-        window.open(`https://wa.me/?text=${text}`, "_blank");
     }
 
     // Quick cash buttons
@@ -250,7 +258,7 @@ export default function CheckoutDialog({
                             <CheckCircle2 className="w-10 h-10 text-green-500" />
                         </div>
                         <div>
-                            <p className="text-2xl font-bold text-amber-500">{formatRupiah(total)}</p>
+                            <p className="text-2xl font-bold text-amber-500">{formatRupiah(grandTotal)}</p>
                             {paymentMethod === "cash" && changeAmount > 0 && (
                                 <p className="text-zinc-400">Kembalian: {formatRupiah(changeAmount)}</p>
                             )}
@@ -269,14 +277,6 @@ export default function CheckoutDialog({
                                 )}
                                 {printing ? "Mencetak..." : "Cetak Struk"}
                             </Button>
-                            <Button
-                                variant="outline"
-                                onClick={handleWhatsApp}
-                                className="border-zinc-700 bg-zinc-800"
-                            >
-                                <MessageCircle className="w-4 h-4 mr-2" />
-                                WhatsApp
-                            </Button>
                         </div>
                         <Button
                             className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-black font-semibold"
@@ -290,7 +290,7 @@ export default function CheckoutDialog({
                         {/* Total */}
                         <div className="text-center py-4 bg-zinc-800 rounded-lg">
                             <p className="text-sm text-zinc-400">Total Pembayaran</p>
-                            <p className="text-3xl font-bold text-amber-500">{formatRupiah(total)}</p>
+                            <p className="text-3xl font-bold text-amber-500">{formatRupiah(grandTotal)}</p>
                         </div>
 
                         {/* Payment Method */}
@@ -322,6 +322,46 @@ export default function CheckoutDialog({
                             </div>
                         </div>
 
+                        {/* Tebus Murah */}
+                        {total >= TEBUS_MIN && (
+                            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Tag className="w-4 h-4 text-amber-500" />
+                                        <span className="font-semibold text-amber-400">Tebus Murah</span>
+                                    </div>
+                                    <span className="text-sm text-zinc-400">{formatRupiah(TEBUS_HARGA)}/pcs</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-8 w-8 border-zinc-600 bg-zinc-800"
+                                            onClick={() => setTebusQty(q => Math.max(0, q - 1))}
+                                            disabled={tebusQty === 0}
+                                        >
+                                            −
+                                        </Button>
+                                        <span className="w-6 text-center font-bold text-lg">{tebusQty}</span>
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-8 w-8 border-zinc-600 bg-zinc-800"
+                                            onClick={() => setTebusQty(q => q + 1)}
+                                        >
+                                            +
+                                        </Button>
+                                    </div>
+                                    {tebusQty > 0 && (
+                                        <span className="text-amber-400 font-semibold">
+                                            {formatRupiah(tebusQty * TEBUS_HARGA)}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Cash Input */}
                         {paymentMethod === "cash" && (
                             <div className="space-y-3">
@@ -351,13 +391,13 @@ export default function CheckoutDialog({
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setCashReceived(total.toString())}
+                                        onClick={() => setCashReceived(grandTotal.toString())}
                                         className="border-zinc-700 bg-zinc-800"
                                     >
                                         Uang Pas
                                     </Button>
                                 </div>
-                                {Number(cashReceived) >= total && (
+                                {Number(cashReceived) >= grandTotal && (
                                     <div className="bg-green-500/20 text-green-400 p-3 rounded-lg text-center">
                                         Kembalian: <span className="font-bold">{formatRupiah(changeAmount)}</span>
                                     </div>
