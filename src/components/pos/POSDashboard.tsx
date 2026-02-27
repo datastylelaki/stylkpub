@@ -47,10 +47,10 @@ export default function POSDashboard({ user, profile, categories, products: init
     const supabase = createClient();
     const { connected: printerConnected, connecting: printerConnecting, bluetoothSupported, connect: connectBT, disconnect: disconnectBT, deviceName } = usePrinter();
 
-    // Real-time stock updates
+    // Real-time stock updates for products AND variants
     useEffect(() => {
         const channel = supabase
-            .channel('product-stock-changes')
+            .channel('pos-stock-changes')
             .on(
                 'postgres_changes',
                 {
@@ -59,12 +59,30 @@ export default function POSDashboard({ user, profile, categories, products: init
                     table: 'products'
                 },
                 (payload) => {
-                    // Update product in state when stock changes
                     setProducts(prev => prev.map(product =>
                         product.id === payload.new.id
                             ? { ...product, ...payload.new as any }
                             : product
                     ));
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'product_variants'
+                },
+                (payload) => {
+                    // Update variant stock in state when it changes in DB
+                    setProducts(prev => prev.map(product => ({
+                        ...product,
+                        variants: product.variants.map(variant =>
+                            variant.id === payload.new.id
+                                ? { ...variant, stock: (payload.new as any).stock }
+                                : variant
+                        )
+                    })));
                 }
             )
             .subscribe();
@@ -73,6 +91,20 @@ export default function POSDashboard({ user, profile, categories, products: init
             supabase.removeChannel(channel);
         };
     }, [supabase]);
+
+    // Optimistic stock update after successful checkout
+    function handleStockUpdate(soldItems: { variantId: string; quantity: number }[]) {
+        setProducts(prev => prev.map(product => ({
+            ...product,
+            variants: product.variants.map(variant => {
+                const sold = soldItems.find(s => s.variantId === variant.id);
+                if (sold) {
+                    return { ...variant, stock: Math.max(0, variant.stock - sold.quantity) };
+                }
+                return variant;
+            })
+        })));
+    }
 
     // Filter products
     const filteredProducts = useMemo(() => {
@@ -407,6 +439,7 @@ export default function POSDashboard({ user, profile, categories, products: init
                 total={cartTotal}
                 profile={profile}
                 onSuccess={clearCart}
+                onStockUpdate={handleStockUpdate}
                 formatRupiah={formatRupiah}
             />
         </div>

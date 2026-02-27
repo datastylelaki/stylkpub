@@ -32,6 +32,7 @@ interface CheckoutDialogProps {
     total: number;
     profile: Profile | null;
     onSuccess: () => void;
+    onStockUpdate: (soldItems: { variantId: string; quantity: number }[]) => void;
     formatRupiah: (amount: number) => string;
 }
 
@@ -44,6 +45,7 @@ export default function CheckoutDialog({
     total,
     profile,
     onSuccess,
+    onStockUpdate,
     formatRupiah,
 }: CheckoutDialogProps) {
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
@@ -135,6 +137,12 @@ export default function CheckoutDialog({
             setTransactionId(transaction.id);
             setSuccess(true);
             toast.success("Transaksi berhasil!");
+
+            // Optimistic stock update — update UI immediately without page refresh
+            onStockUpdate(cart.map(item => ({
+                variantId: item.variant.id,
+                quantity: item.quantity,
+            })));
         } catch (error) {
             console.error(error);
             toast.error("Gagal memproses transaksi");
