@@ -65,38 +65,37 @@ export default async function AdminProductsPage({
                     <h1 className="text-2xl md:text-3xl font-bold">Manajemen Produk</h1>
                     <p className="text-muted-foreground text-sm md:text-base">Tambah, edit, atau hapus produk.</p>
                 </div>
-                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                <div className="flex flex-col gap-3 w-full md:w-auto">
                     <ProductSearchInput />
-                    <div className="flex flex-wrap gap-2">
-                        <Link href="/" className="flex-1 md:flex-none">
-                            <Button variant="outline" className="w-full">
-                                <ArrowLeft className="mr-2 h-4 w-4" /> POS
+                    <div className="grid grid-cols-3 md:flex gap-2">
+                        <Link href="/">
+                            <Button variant="outline" size="sm" className="w-full text-xs">
+                                <ArrowLeft className="mr-1 h-3.5 w-3.5 shrink-0" /> POS
                             </Button>
                         </Link>
-                        <Link href="/admin/categories" className="flex-1 md:flex-none">
-                            <Button variant="outline" className="w-full">
+                        <Link href="/admin/categories">
+                            <Button variant="outline" size="sm" className="w-full text-xs">
                                 Kategori
                             </Button>
                         </Link>
-                        <Link href="/admin/users" className="flex-1 md:flex-none">
-                            <Button variant="outline" className="text-purple-500 hover:text-purple-600 w-full">
+                        <Link href="/admin/users">
+                            <Button variant="outline" size="sm" className="w-full text-xs text-purple-500 hover:text-purple-600">
                                 User
                             </Button>
                         </Link>
-                        <Link href="/admin/products/import" className="flex-1 md:flex-none">
-                            <Button variant="outline" className="text-amber-500 hover:text-amber-600 w-full">
+                        <Link href="/admin/products/import">
+                            <Button variant="outline" size="sm" className="w-full text-xs text-amber-500 hover:text-amber-600">
                                 Import
                             </Button>
                         </Link>
-                        <Link href="/admin/settings" className="flex-1 md:flex-none">
-                            <Button variant="outline" className="text-green-500 hover:text-green-600 w-full">
+                        <Link href="/admin/settings">
+                            <Button variant="outline" size="sm" className="w-full text-xs text-green-500 hover:text-green-600">
                                 Struk
                             </Button>
                         </Link>
-
-                        <Link href="/admin/products/new" className="w-full md:w-auto">
-                            <Button className="bg-amber-500 hover:bg-amber-600 text-black w-full font-bold">
-                                <Plus className="mr-2 h-4 w-4" /> Produk
+                        <Link href="/admin/products/new">
+                            <Button size="sm" className="w-full text-xs bg-amber-500 hover:bg-amber-600 text-black font-bold">
+                                <Plus className="mr-1 h-3.5 w-3.5 shrink-0" /> Produk
                             </Button>
                         </Link>
                     </div>
