@@ -13,7 +13,7 @@ export default async function AdminSettingsPage() {
 
     const { data: profile } = await supabase
         .from("profiles")
-        .select("role")
+        .select("*")
         .eq("user_id", user.id)
         .single();
 
@@ -45,7 +45,8 @@ export default async function AdminSettingsPage() {
                 </div>
             </div>
 
-            <ReceiptSettingsForm settings={settings} />
+            <ReceiptSettingsForm settings={settings} profile={profile} />
         </div>
     );
 }
+

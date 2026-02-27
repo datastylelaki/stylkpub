@@ -1,18 +1,12 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
-export async function saveStoreSettings(data: {
-    id?: string;
-    store_name: string;
-    store_address: string | null;
-    store_phone: string | null;
-    receipt_footer: string | null;
-}) {
+// Helper: Verify the current user is an admin
+async function verifyAdmin() {
     const supabase = await createClient();
-
-    // Verify Admin
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
@@ -23,9 +17,21 @@ export async function saveStoreSettings(data: {
         .single();
 
     if (profile?.role !== "admin") throw new Error("Forbidden");
+    return { supabase, user };
+}
+
+export async function saveStoreSettings(data: {
+    id?: string;
+    store_name: string;
+    store_address: string | null;
+    store_phone: string | null;
+    receipt_footer: string | null;
+}) {
+    await verifyAdmin();
+    const adminSupabase = createAdminClient();
 
     if (data.id) {
-        const { error } = await supabase
+        const { error } = await adminSupabase
             .from("store_settings")
             .update({
                 store_name: data.store_name,
@@ -37,10 +43,10 @@ export async function saveStoreSettings(data: {
 
         if (error) {
             console.error("Error updating store settings:", error);
-            throw new Error("Failed to update settings");
+            throw new Error("Failed to update settings: " + error.message);
         }
     } else {
-        const { error } = await supabase
+        const { error } = await adminSupabase
             .from("store_settings")
             .insert({
                 store_name: data.store_name,
@@ -51,9 +57,30 @@ export async function saveStoreSettings(data: {
 
         if (error) {
             console.error("Error creating store settings:", error);
-            throw new Error("Failed to create settings");
+            throw new Error("Failed to create settings: " + error.message);
         }
     }
 
     revalidatePath("/admin/settings");
+}
+
+export async function updateCashierName(name: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const adminSupabase = createAdminClient();
+
+    const { error } = await adminSupabase
+        .from("profiles")
+        .update({ name })
+        .eq("user_id", user.id);
+
+    if (error) {
+        console.error("Error updating cashier name:", error);
+        throw new Error("Failed to update name: " + error.message);
+    }
+
+    revalidatePath("/admin/settings");
+    revalidatePath("/");
 }
