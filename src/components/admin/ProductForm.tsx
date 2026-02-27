@@ -83,7 +83,11 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                 toast.success("Produk berhasil dibuat!");
             }
             router.refresh();
-        } catch (error) {
+        } catch (error: any) {
+            // Next.js redirect() throws a NEXT_REDIRECT error — let it pass through
+            if (error?.digest?.startsWith("NEXT_REDIRECT")) {
+                throw error;
+            }
             toast.error(initialData ? "Gagal update produk" : "Gagal membuat produk");
             console.error(error);
         } finally {

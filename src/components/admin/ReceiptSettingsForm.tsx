@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { StoreSettings } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, Save, Printer, Store } from "lucide-react";
+import { saveStoreSettings } from "@/app/admin/settings/actions";
 
 interface ReceiptSettingsFormProps {
     settings: StoreSettings | null;
@@ -23,35 +23,17 @@ export function ReceiptSettingsForm({ settings }: ReceiptSettingsFormProps) {
     const [receiptFooter, setReceiptFooter] = useState(
         settings?.receipt_footer || "Barang yang sudah dibeli\ntidak dapat ditukar/retur"
     );
-    const supabase = createClient();
 
     async function handleSave() {
         setLoading(true);
         try {
-            if (settings?.id) {
-                const { error } = await supabase
-                    .from("store_settings")
-                    .update({
-                        store_name: storeName,
-                        store_address: storeAddress || null,
-                        store_phone: storePhone || null,
-                        receipt_footer: receiptFooter || null,
-                    })
-                    .eq("id", settings.id);
-
-                if (error) throw error;
-            } else {
-                const { error } = await supabase
-                    .from("store_settings")
-                    .insert({
-                        store_name: storeName,
-                        store_address: storeAddress || null,
-                        store_phone: storePhone || null,
-                        receipt_footer: receiptFooter || null,
-                    });
-
-                if (error) throw error;
-            }
+            await saveStoreSettings({
+                id: settings?.id,
+                store_name: storeName,
+                store_address: storeAddress || null,
+                store_phone: storePhone || null,
+                receipt_footer: receiptFooter || null,
+            });
 
             toast.success("Pengaturan berhasil disimpan!");
         } catch (error) {
