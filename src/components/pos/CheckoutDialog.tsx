@@ -55,7 +55,7 @@ export default function CheckoutDialog({
     const [transactionId, setTransactionId] = useState<string | null>(null);
     const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null);
     const supabase = createClient();
-    const { connected: printerConnected, printing, print } = usePrinter();
+    const { connected: printerConnected, printing, print, connect: connectBT } = usePrinter();
 
     useEffect(() => {
         supabase.from("store_settings").select("*").single().then(({ data }) => {
@@ -163,9 +163,17 @@ export default function CheckoutDialog({
     }
 
     async function handlePrint() {
+        // Auto-connect if not connected
         if (!printerConnected) {
-            toast.error("Printer belum terhubung. Hubungkan printer di menu atas.");
-            return;
+            try {
+                toast.info("Menghubungkan printer...");
+                await connectBT();
+                toast.success("Printer terhubung!");
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : "Gagal menghubungkan printer";
+                toast.error(msg);
+                return;
+            }
         }
 
         const receiptData: ReceiptData = {
