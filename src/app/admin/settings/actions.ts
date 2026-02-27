@@ -26,6 +26,8 @@ export async function saveStoreSettings(data: {
     store_address: string | null;
     store_phone: string | null;
     receipt_footer: string | null;
+    qris_image_url: string | null;
+    marketing_budget: number;
 }) {
     await verifyAdmin();
     const adminSupabase = createAdminClient();
@@ -39,6 +41,8 @@ export async function saveStoreSettings(data: {
                 store_address: data.store_address,
                 store_phone: data.store_phone,
                 receipt_footer: data.receipt_footer,
+                qris_image_url: data.qris_image_url,
+                marketing_budget: data.marketing_budget,
                 updated_at: new Date().toISOString(),
             })
             .eq("id", data.id);
@@ -56,6 +60,8 @@ export async function saveStoreSettings(data: {
                 store_address: data.store_address,
                 store_phone: data.store_phone,
                 receipt_footer: data.receipt_footer,
+                qris_image_url: data.qris_image_url,
+                marketing_budget: data.marketing_budget,
                 bank_name: "",
             });
 

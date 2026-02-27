@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, Save, Printer, Store, UserCog } from "lucide-react";
+import { Loader2, Save, Printer, Store, UserCog, QrCode, Megaphone } from "lucide-react";
 import { saveStoreSettings, updateCashierName } from "@/app/admin/settings/actions";
 
 interface ReceiptSettingsFormProps {
@@ -25,6 +25,8 @@ export function ReceiptSettingsForm({ settings, profile }: ReceiptSettingsFormPr
     const [receiptFooter, setReceiptFooter] = useState(
         settings?.receipt_footer || "Barang yang sudah dibeli\ntidak dapat ditukar/retur"
     );
+    const [qrisImageUrl, setQrisImageUrl] = useState(settings?.qris_image_url || "");
+    const [marketingBudget, setMarketingBudget] = useState(settings?.marketing_budget ?? 15_000_000);
     const [cashierName, setCashierName] = useState(profile?.name || "");
 
     async function handleSave() {
@@ -36,6 +38,8 @@ export function ReceiptSettingsForm({ settings, profile }: ReceiptSettingsFormPr
                 store_address: storeAddress || null,
                 store_phone: storePhone || null,
                 receipt_footer: receiptFooter || null,
+                qris_image_url: qrisImageUrl || null,
+                marketing_budget: marketingBudget,
             });
 
             toast.success("Pengaturan berhasil disimpan!");
@@ -141,6 +145,57 @@ export function ReceiptSettingsForm({ settings, profile }: ReceiptSettingsFormPr
                             placeholder="081234567890"
                             className="bg-muted/50 border-input"
                         />
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* QRIS & Marketing */}
+            <Card className="border-border bg-card">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <QrCode className="h-5 w-5 text-amber-500" />
+                        QRIS & Voucher
+                    </CardTitle>
+                    <CardDescription>Pengaturan pembayaran QRIS dan budget voucher marketing.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="qrisImageUrl">URL Gambar QRIS</Label>
+                        <Input
+                            id="qrisImageUrl"
+                            value={qrisImageUrl}
+                            onChange={(e) => setQrisImageUrl(e.target.value)}
+                            placeholder="https://... (URL gambar QR code)"
+                            className="bg-muted/50 border-input"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Upload gambar ke Supabase Storage atau hosting lain, lalu paste URL-nya di sini.
+                            Gambar akan tampil di checkout saat customer memilih QRIS.
+                        </p>
+                        {qrisImageUrl && (
+                            <img
+                                src={qrisImageUrl}
+                                alt="Preview QRIS"
+                                className="w-32 h-32 object-contain border border-border rounded-lg mt-2"
+                            />
+                        )}
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="marketingBudget" className="flex items-center gap-2">
+                            <Megaphone className="h-4 w-4 text-purple-400" />
+                            Budget Marketing Voucher (Rp)
+                        </Label>
+                        <Input
+                            id="marketingBudget"
+                            type="number"
+                            value={marketingBudget}
+                            onChange={(e) => setMarketingBudget(Number(e.target.value))}
+                            placeholder="15000000"
+                            className="bg-muted/50 border-input"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Budget total untuk voucher spin wheel. Penggunaan voucher akan dikurangi dari budget ini dan ditampilkan di halaman laporan.
+                        </p>
                     </div>
                 </CardContent>
             </Card>
