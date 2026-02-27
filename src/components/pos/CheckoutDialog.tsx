@@ -21,6 +21,7 @@ import {
     CheckCircle2,
     Printer,
     Tag,
+    Gift,
 } from "lucide-react";
 import { usePrinter } from "@/components/PrinterProvider";
 import type { ReceiptData } from "@/lib/thermal-printer";
@@ -41,6 +42,17 @@ type PaymentMethod = "cash" | "qris";
 const TEBUS_HARGA = 25_000;
 const TEBUS_MIN = 200_000;
 
+const VOUCHER_MIN = 150_000;
+const VOUCHER_OPTIONS = [
+    { label: "Rp5.000",   value: 5_000 },
+    { label: "Rp10.000",  value: 10_000 },
+    { label: "Rp15.000",  value: 15_000 },
+    { label: "Rp20.000",  value: 20_000 },
+    { label: "Rp30.000",  value: 30_000 },
+    { label: "Free Kaos", value: 0 },
+] as const;
+type VoucherOption = typeof VOUCHER_OPTIONS[number];
+
 export default function CheckoutDialog({
     open,
     onOpenChange,
@@ -58,6 +70,7 @@ export default function CheckoutDialog({
     const [transactionId, setTransactionId] = useState<string | null>(null);
     const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null);
     const [tebusQty, setTebusQty] = useState(0);
+    const [appliedVouchers, setAppliedVouchers] = useState<VoucherOption[]>([]);
     const supabase = createClient();
     const { connected: printerConnected, printing, print, connect: connectBT } = usePrinter();
 
@@ -72,14 +85,26 @@ export default function CheckoutDialog({
     }, [total]);
 
     const grandTotal = total + tebusQty * TEBUS_HARGA;
+    const totalDiscount = appliedVouchers.reduce((sum, v) => sum + v.value, 0);
+    const netTotal = grandTotal - totalDiscount;
+    const maxVouchers = Math.floor(grandTotal / VOUCHER_MIN);
 
     const changeAmount = paymentMethod === "cash"
-        ? Math.max(0, Number(cashReceived) - grandTotal)
+        ? Math.max(0, Number(cashReceived) - netTotal)
         : 0;
 
     const canProceed = paymentMethod === "cash"
-        ? Number(cashReceived) >= grandTotal
+        ? Number(cashReceived) >= netTotal
         : true;
+
+    function addVoucher(option: VoucherOption) {
+        if (appliedVouchers.length >= maxVouchers) return;
+        setAppliedVouchers(prev => [...prev, option]);
+    }
+
+    function removeVoucher(index: number) {
+        setAppliedVouchers(prev => prev.filter((_, i) => i !== index));
+    }
 
     async function handleCheckout() {
         if (!profile) {
@@ -114,15 +139,19 @@ export default function CheckoutDialog({
                 }
             }
 
-            // Create transaction
+            // Create transaction — total tetap GROSS, discount dicatat terpisah
             const { data: transaction, error: txError } = await supabase
                 .from("transactions")
                 .insert({
                     cashier_id: profile.id,
                     total: grandTotal,
                     payment_method: paymentMethod,
-                    cash_received: paymentMethod === "cash" ? Number(cashReceived) : grandTotal,
+                    cash_received: paymentMethod === "cash" ? Number(cashReceived) : netTotal,
                     change_amount: changeAmount,
+                    discount: totalDiscount,
+                    discount_label: appliedVouchers.length > 0
+                        ? JSON.stringify(appliedVouchers.map(v => v.label))
+                        : null,
                 })
                 .select()
                 .single();
@@ -167,7 +196,7 @@ export default function CheckoutDialog({
             setSuccess(true);
             toast.success("Transaksi berhasil!");
 
-            // Optimistic stock update — update UI immediately without page refresh
+            // Optimistic stock update
             onStockUpdate(cart.map(item => ({
                 variantId: item.variant.id,
                 quantity: item.quantity,
@@ -188,6 +217,7 @@ export default function CheckoutDialog({
             setCashReceived("");
             setPaymentMethod("cash");
             setTebusQty(0);
+            setAppliedVouchers([]);
         }
         onOpenChange(false);
     }
@@ -224,7 +254,10 @@ export default function CheckoutDialog({
                     price: TEBUS_HARGA,
                 }] : []),
             ],
-            total: grandTotal,
+            discountItems: appliedVouchers.length > 0
+                ? appliedVouchers.map(v => ({ label: `Voucher ${v.label}`, amount: v.value }))
+                : undefined,
+            total: netTotal,
             paymentMethod,
             cashReceived: paymentMethod === "cash" ? Number(cashReceived) : undefined,
             changeAmount: paymentMethod === "cash" ? changeAmount : undefined,
@@ -247,7 +280,7 @@ export default function CheckoutDialog({
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
-            <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-md">
+            <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{success ? "Transaksi Berhasil" : "Pembayaran"}</DialogTitle>
                 </DialogHeader>
@@ -258,7 +291,10 @@ export default function CheckoutDialog({
                             <CheckCircle2 className="w-10 h-10 text-green-500" />
                         </div>
                         <div>
-                            <p className="text-2xl font-bold text-amber-500">{formatRupiah(grandTotal)}</p>
+                            <p className="text-2xl font-bold text-amber-500">{formatRupiah(netTotal)}</p>
+                            {totalDiscount > 0 && (
+                                <p className="text-purple-400 text-sm">Hemat: {formatRupiah(totalDiscount)}</p>
+                            )}
                             {paymentMethod === "cash" && changeAmount > 0 && (
                                 <p className="text-zinc-400">Kembalian: {formatRupiah(changeAmount)}</p>
                             )}
@@ -290,7 +326,12 @@ export default function CheckoutDialog({
                         {/* Total */}
                         <div className="text-center py-4 bg-zinc-800 rounded-lg">
                             <p className="text-sm text-zinc-400">Total Pembayaran</p>
-                            <p className="text-3xl font-bold text-amber-500">{formatRupiah(grandTotal)}</p>
+                            <p className="text-3xl font-bold text-amber-500">{formatRupiah(netTotal)}</p>
+                            {totalDiscount > 0 && (
+                                <p className="text-xs text-purple-400 mt-1">
+                                    Sebelum diskon: {formatRupiah(grandTotal)} · Hemat {formatRupiah(totalDiscount)}
+                                </p>
+                            )}
                         </div>
 
                         {/* Payment Method */}
@@ -362,6 +403,59 @@ export default function CheckoutDialog({
                             </div>
                         )}
 
+                        {/* Voucher */}
+                        {grandTotal >= VOUCHER_MIN && (
+                            <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Gift className="w-4 h-4 text-purple-400" />
+                                        <span className="font-semibold text-purple-300">Voucher Spin</span>
+                                    </div>
+                                    <span className="text-xs text-zinc-400">
+                                        {appliedVouchers.length}/{maxVouchers} voucher
+                                    </span>
+                                </div>
+
+                                {/* Applied voucher chips */}
+                                {appliedVouchers.length > 0 && (
+                                    <div className="flex flex-wrap gap-1">
+                                        {appliedVouchers.map((v, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => removeVoucher(i)}
+                                                className="flex items-center gap-1 px-2 py-1 bg-purple-500/20 text-purple-300 rounded text-xs hover:bg-red-500/20 hover:text-red-300 transition-colors"
+                                            >
+                                                {v.label} ✕
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Voucher buttons */}
+                                {appliedVouchers.length < maxVouchers && (
+                                    <div className="flex flex-wrap gap-2">
+                                        {VOUCHER_OPTIONS.map((opt) => (
+                                            <Button
+                                                key={opt.label}
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => addVoucher(opt)}
+                                                className="border-purple-500/40 bg-zinc-800 text-purple-300 hover:bg-purple-500/20 text-xs"
+                                            >
+                                                {opt.label}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {totalDiscount > 0 && (
+                                    <div className="text-right text-purple-300 font-semibold text-sm">
+                                        Diskon: -{formatRupiah(totalDiscount)}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Cash Input */}
                         {paymentMethod === "cash" && (
                             <div className="space-y-3">
@@ -391,13 +485,13 @@ export default function CheckoutDialog({
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => setCashReceived(grandTotal.toString())}
+                                        onClick={() => setCashReceived(netTotal.toString())}
                                         className="border-zinc-700 bg-zinc-800"
                                     >
                                         Uang Pas
                                     </Button>
                                 </div>
-                                {Number(cashReceived) >= grandTotal && (
+                                {Number(cashReceived) >= netTotal && (
                                     <div className="bg-green-500/20 text-green-400 p-3 rounded-lg text-center">
                                         Kembalian: <span className="font-bold">{formatRupiah(changeAmount)}</span>
                                     </div>
@@ -407,10 +501,18 @@ export default function CheckoutDialog({
 
                         {/* QRIS */}
                         {paymentMethod === "qris" && (
-                            <div className="bg-zinc-800 p-6 rounded-lg text-center space-y-3">
-                                <div className="w-16 h-16 mx-auto bg-amber-500/20 rounded-full flex items-center justify-center">
-                                    <QrCode className="w-8 h-8 text-amber-500" />
-                                </div>
+                            <div className="bg-zinc-800 p-4 rounded-lg text-center space-y-3">
+                                {storeSettings?.qris_image_url ? (
+                                    <img
+                                        src={storeSettings.qris_image_url}
+                                        alt="QRIS Payment"
+                                        className="mx-auto w-52 h-52 object-contain rounded"
+                                    />
+                                ) : (
+                                    <div className="w-16 h-16 mx-auto bg-amber-500/20 rounded-full flex items-center justify-center">
+                                        <QrCode className="w-8 h-8 text-amber-500" />
+                                    </div>
+                                )}
                                 <div>
                                     <p className="font-medium text-white mb-1">Pembayaran QRIS</p>
                                     <p className="text-sm text-zinc-400">Silakan scan QRIS di kasir.</p>

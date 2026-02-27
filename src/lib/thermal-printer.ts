@@ -57,6 +57,7 @@ export interface ReceiptData {
         quantity: number;
         price: number;
     }[];
+    discountItems?: { label: string; amount: number }[];
     total: number;
     paymentMethod: "cash" | "qris";
     cashReceived?: number;
@@ -287,6 +288,15 @@ export function buildReceipt(data: ReceiptData): Uint8Array {
             cmd(...CMD.ALIGN_RIGHT);
             println(subtotalStr);
             cmd(...CMD.ALIGN_LEFT);
+        }
+    }
+
+    // Discount lines (vouchers)
+    if (data.discountItems && data.discountItems.length > 0) {
+        for (const d of data.discountItems) {
+            const dLabel = d.label;
+            const dValue = d.amount === 0 ? "Rp0" : `-${formatCurrency(d.amount)}`;
+            println(padRight(dLabel, CHARS_PER_LINE - dValue.length) + dValue);
         }
     }
 
