@@ -219,7 +219,7 @@ export default function CheckoutDialog({
                 })),
                 ...(tebusQty > 0 ? [{
                     name: "Tebus Murah",
-                    variantInfo: null,
+                    variantInfo: "",
                     quantity: tebusQty,
                     price: TEBUS_HARGA,
                 }] : []),
