@@ -42,6 +42,8 @@ type PaymentMethod = "cash" | "qris";
 const TEBUS_HARGA = 25_000;
 const TEBUS_MIN = 200_000;
 
+const QRIS_IMAGE_URL = "https://voploqlagkqdpoiknxxb.supabase.co/storage/v1/object/public/qris/Image%20QRIS.jpeg";
+
 const VOUCHER_MIN = 150_000;
 const VOUCHER_OPTIONS = [
     { label: "Rp5.000",   value: 5_000 },
@@ -502,17 +504,11 @@ export default function CheckoutDialog({
                         {/* QRIS */}
                         {paymentMethod === "qris" && (
                             <div className="bg-zinc-800 p-4 rounded-lg text-center space-y-3">
-                                {storeSettings?.qris_image_url ? (
-                                    <img
-                                        src={storeSettings.qris_image_url}
-                                        alt="QRIS Payment"
-                                        className="mx-auto w-52 h-52 object-contain rounded"
-                                    />
-                                ) : (
-                                    <div className="w-16 h-16 mx-auto bg-amber-500/20 rounded-full flex items-center justify-center">
-                                        <QrCode className="w-8 h-8 text-amber-500" />
-                                    </div>
-                                )}
+                                <img
+                                    src={QRIS_IMAGE_URL}
+                                    alt="QRIS Payment"
+                                    className="mx-auto w-52 h-52 object-contain rounded"
+                                />
                                 <div>
                                     <p className="font-medium text-white mb-1">Pembayaran QRIS</p>
                                     <p className="text-sm text-zinc-400">Silakan scan QRIS di kasir.</p>
