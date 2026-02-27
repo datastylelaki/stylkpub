@@ -509,11 +509,7 @@ export default function CheckoutDialog({
                                     alt="QRIS Payment"
                                     className="mx-auto w-52 h-52 object-contain rounded"
                                 />
-                                <div>
-                                    <p className="font-medium text-white mb-1">Pembayaran QRIS</p>
-                                    <p className="text-sm text-zinc-400">Silakan scan QRIS di kasir.</p>
-                                    <p className="text-sm text-zinc-400">Klik "Konfirmasi" setelah pembayaran berhasil.</p>
-                                </div>
+                                <p className="text-sm text-zinc-400">Klik "Konfirmasi" setelah pembayaran berhasil.</p>
                             </div>
                         )}
 
