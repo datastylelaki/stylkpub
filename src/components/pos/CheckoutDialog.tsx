@@ -38,6 +38,9 @@ interface CheckoutDialogProps {
 
 type PaymentMethod = "cash" | "qris";
 
+const TEBUS_HARGA = 25_000;
+const TEBUS_MIN = 200_000;
+
 export default function CheckoutDialog({
     open,
     onOpenChange,
@@ -54,6 +57,7 @@ export default function CheckoutDialog({
     const [success, setSuccess] = useState(false);
     const [transactionId, setTransactionId] = useState<string | null>(null);
     const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null);
+    const [tebusQty, setTebusQty] = useState(0);
     const supabase = createClient();
     const { connected: printerConnected, printing, print, connect: connectBT } = usePrinter();
 
@@ -63,9 +67,14 @@ export default function CheckoutDialog({
         });
     }, [supabase]);
 
+    useEffect(() => {
+        if (total < TEBUS_MIN) setTebusQty(0);
+    }, [total]);
+
     const changeAmount = paymentMethod === "cash"
         ? Math.max(0, Number(cashReceived) - total)
         : 0;
+    const grandTotal = total + tebusQty * TEBUS_HARGA;
 
     const canProceed = paymentMethod === "cash"
         ? Number(cashReceived) >= total
@@ -158,6 +167,7 @@ export default function CheckoutDialog({
             setTransactionId(null);
             setCashReceived("");
             setPaymentMethod("cash");
+            setTebusQty(0);
         }
         onOpenChange(false);
     }
