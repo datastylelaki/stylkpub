@@ -5,7 +5,7 @@ import { TopProducts } from "@/components/reports/TopProducts";
 import { DailyReport } from "@/components/reports/DailyReport";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Megaphone } from "lucide-react";
 import Link from "next/link";
 
 export default async function ReportsPage() {
@@ -33,6 +33,12 @@ export default async function ReportsPage() {
     const { data: items } = await supabase
         .from("transaction_items")
         .select("*");
+
+    // Fetch store settings for marketing budget
+    const { data: storeSettings } = await supabase
+        .from("store_settings")
+        .select("marketing_budget")
+        .single();
 
     // Calculate Metrics
     const totalRevenue = transactions?.reduce((sum, t) => sum + t.total, 0) || 0;
@@ -75,6 +81,12 @@ export default async function ReportsPage() {
     const topProducts = Object.values(productStats)
         .sort((a: any, b: any) => b.sales - a.sales)
         .slice(0, 5) as any[];
+
+    // Marketing Budget calculations
+    const marketingBudget = storeSettings?.marketing_budget ?? 15_000_000;
+    const budgetUsed = transactions?.reduce((sum, t) => sum + (t.discount || 0), 0) || 0;
+    const budgetRemaining = Math.max(0, marketingBudget - budgetUsed);
+    const budgetPercent = marketingBudget > 0 ? Math.min(100, Math.round((budgetUsed / marketingBudget) * 100)) : 0;
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6 min-h-screen bg-black text-white">
@@ -178,6 +190,56 @@ export default async function ReportsPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Marketing Budget */}
+            <Card className="bg-zinc-900 border-zinc-800 text-white">
+                <CardHeader className="flex flex-row items-center gap-3 pb-3">
+                    <div className="bg-purple-500/20 p-2 rounded-full">
+                        <Megaphone className="h-5 w-5 text-purple-400" />
+                    </div>
+                    <div>
+                        <CardTitle className="text-base">Budget Marketing Voucher</CardTitle>
+                        <CardDescription className="text-zinc-400 text-xs">
+                            Total diskon voucher spin wheel yang telah digunakan
+                        </CardDescription>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                            <div className="text-xs text-zinc-400 mb-1">Total Budget</div>
+                            <div className="text-lg font-bold text-white">
+                                Rp {marketingBudget.toLocaleString("id-ID")}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-xs text-zinc-400 mb-1">Terpakai</div>
+                            <div className="text-lg font-bold text-purple-400">
+                                Rp {budgetUsed.toLocaleString("id-ID")}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-xs text-zinc-400 mb-1">Sisa</div>
+                            <div className={`text-lg font-bold ${budgetRemaining < marketingBudget * 0.2 ? "text-red-400" : "text-green-400"}`}>
+                                Rp {budgetRemaining.toLocaleString("id-ID")}
+                            </div>
+                        </div>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-zinc-400">
+                            <span>Penggunaan budget</span>
+                            <span>{budgetPercent}%</span>
+                        </div>
+                        <div className="h-2 bg-zinc-700 rounded-full overflow-hidden">
+                            <div
+                                className={`h-full rounded-full transition-all ${budgetPercent >= 90 ? "bg-red-500" : budgetPercent >= 70 ? "bg-yellow-500" : "bg-purple-500"}`}
+                                style={{ width: `${budgetPercent}%` }}
+                            />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Payment Method Breakdown */}
             <h3 className="text-xl font-bold tracking-tight mt-8 mb-4">Metode Pembayaran</h3>
