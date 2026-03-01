@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { usePrinter } from "@/components/PrinterProvider";
 import type { ReceiptData } from "@/lib/thermal-printer";
+import { getVariantPrice } from "@/lib/utils";
 
 interface CheckoutDialogProps {
     open: boolean;
@@ -174,7 +175,7 @@ export default function CheckoutDialog({
                 product_name: item.variant.product.name,
                 variant_info: `${item.variant.size} / ${item.variant.color}`,
                 quantity: item.quantity,
-                price: item.variant.product.base_price,
+                price: getVariantPrice(item.variant.product.base_price, item.variant.size, item.variant.product.size_surcharge),
             }));
 
             if (tebusQty > 0) {
@@ -247,7 +248,7 @@ export default function CheckoutDialog({
                     name: item.variant.product.name,
                     variantInfo: `${item.variant.size} / ${item.variant.color}`,
                     quantity: item.quantity,
-                    price: item.variant.product.base_price,
+                    price: getVariantPrice(item.variant.product.base_price, item.variant.size, item.variant.product.size_surcharge),
                 })),
                 ...(tebusQty > 0 ? [{
                     name: "Tebus Murah",

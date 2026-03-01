@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { getVariantPrice } from "@/lib/utils";
 import {
     ShoppingCart,
     Search,
@@ -114,7 +115,10 @@ export default function POSDashboard({ user, profile, categories, products: init
 
     // Cart calculations
     const cartTotal = useMemo(() => {
-        return cart.reduce((sum, item) => sum + item.variant.product.base_price * item.quantity, 0);
+        return cart.reduce((sum, item) => {
+            const price = getVariantPrice(item.variant.product.base_price, item.variant.size, item.variant.product.size_surcharge);
+            return sum + price * item.quantity;
+        }, 0);
     }, [cart]);
 
     const cartItemCount = useMemo(() => {
@@ -264,7 +268,7 @@ export default function POSDashboard({ user, profile, categories, products: init
                                                                     {item.variant.size} / {item.variant.color}
                                                                 </p>
                                                                 <p className="text-amber-500 font-semibold mt-1">
-                                                                    {formatRupiah(item.variant.product.base_price)}
+                                                                    {formatRupiah(getVariantPrice(item.variant.product.base_price, item.variant.size, item.variant.product.size_surcharge))}
                                                                 </p>
                                                             </div>
                                                             <Button
@@ -295,7 +299,7 @@ export default function POSDashboard({ user, profile, categories, products: init
                                                                 <Plus className="h-4 w-4" />
                                                             </Button>
                                                             <span className="ml-auto font-semibold text-foreground">
-                                                                {formatRupiah(item.variant.product.base_price * item.quantity)}
+                                                                {formatRupiah(getVariantPrice(item.variant.product.base_price, item.variant.size, item.variant.product.size_surcharge) * item.quantity)}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -477,7 +481,11 @@ function ProductCard({
             {/* Product Info */}
             <div className="p-3 space-y-2">
                 <h3 className="font-medium text-foreground text-sm line-clamp-2">{product.name}</h3>
-                <p className="text-amber-500 font-bold">{formatRupiah(product.base_price)}</p>
+                <p className="text-amber-500 font-bold">
+                    {selectedVariant && product.size_surcharge
+                        ? formatRupiah(getVariantPrice(product.base_price, selectedVariant.size, true))
+                        : formatRupiah(product.base_price)}
+                </p>
 
                 {/* Variant Selectors Wrapper */}
                 {(availableSizes.length > 0 || (selectedVariant && availableColors.length > 1)) && (

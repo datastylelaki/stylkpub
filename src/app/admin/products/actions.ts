@@ -16,6 +16,7 @@ const productSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
     category_id: z.string().uuid("Invalid category"),
     base_price: z.number().min(0, "Price cannot be negative"),
+    size_surcharge: z.boolean(),
     image_url: z.string().optional(),
     variants: z.array(variantSchema).min(1, "At least one variant is required"),
 });
@@ -44,6 +45,7 @@ export async function createProduct(data: ProductFormValues) {
             name: data.name,
             category_id: data.category_id,
             base_price: data.base_price,
+            size_surcharge: data.size_surcharge,
             image_url: data.image_url,
         })
         .select()
@@ -102,6 +104,7 @@ export async function updateProduct(id: string, data: ProductFormValues) {
             name: data.name,
             category_id: data.category_id,
             base_price: data.base_price,
+            size_surcharge: data.size_surcharge,
             image_url: data.image_url,
         })
         .eq("id", id);

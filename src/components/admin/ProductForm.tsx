@@ -17,9 +17,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { createProduct, updateProduct, ProductFormValues } from "@/app/admin/products/actions";
 import { Category, Product, ProductVariant } from "@/types/database";
+import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getSizeSurcharge } from "@/lib/utils";
 
 const variantSchema = z.object({
     size: z.string().min(1, "Size required"),
@@ -31,6 +33,7 @@ const formSchema = z.object({
     name: z.string().min(2, "Name required"),
     category_id: z.string().uuid("Select category"),
     base_price: z.coerce.number().min(0, "Price >= 0"),
+    size_surcharge: z.boolean(),
     image_url: z.string().optional(),
     variants: z.array(variantSchema).min(1, "Need 1 variant"),
 });
@@ -48,6 +51,7 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
         name: initialData.name,
         category_id: initialData.category_id || "",
         base_price: initialData.base_price,
+        size_surcharge: initialData.size_surcharge ?? false,
         image_url: initialData.image_url || "",
         variants: initialData.variants.map(v => ({
             size: v.size,
@@ -57,6 +61,7 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
     } : {
         name: "",
         base_price: 0,
+        size_surcharge: false,
         category_id: "",
         image_url: "",
         variants: [{ size: "M", color: "Hitam", stock: 10 }],
@@ -152,6 +157,27 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                     />
                 </div>
 
+                <FormField
+                    control={form.control}
+                    name="size_surcharge"
+                    render={({ field }) => (
+                        <FormItem className="flex items-center justify-between rounded-lg border border-input p-4 bg-muted/50">
+                            <div className="space-y-0.5">
+                                <FormLabel className="text-sm font-medium">Tambahan Harga Ukuran Besar</FormLabel>
+                                <p className="text-xs text-muted-foreground">
+                                    XXL +Rp5.000 | XXXL +Rp10.000 dari harga dasar
+                                </p>
+                            </div>
+                            <FormControl>
+                                <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
+
                 <div className="space-y-2">
                     <FormLabel>Foto Produk</FormLabel>
                     <div className="flex items-center gap-4">
@@ -204,8 +230,19 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                         </Button>
                     </div>
 
-                    {fields.map((field, index) => (
+                    {fields.map((field, index) => {
+                        const variantSize = form.watch(`variants.${index}.size`);
+                        const basePrice = form.watch("base_price");
+                        const surchargeEnabled = form.watch("size_surcharge");
+                        const surchargeAmount = surchargeEnabled ? getSizeSurcharge(variantSize) : 0;
+
+                        return (
                         <div key={field.id} className="p-4 border border-input rounded-lg bg-muted/50 space-y-4 md:space-y-0 md:flex md:gap-4 md:items-end">
+                            {surchargeAmount > 0 && (
+                                <div className="md:hidden text-xs text-amber-500 font-medium">
+                                    Harga: Rp{(basePrice + surchargeAmount).toLocaleString("id-ID")} (+Rp{surchargeAmount.toLocaleString("id-ID")})
+                                </div>
+                            )}
                             <div className="grid grid-cols-2 md:contents gap-4">
                                 <FormField
                                     control={form.control}
@@ -221,7 +258,12 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                                                 </FormControl>
                                                 <SelectContent className="bg-background border-input">
                                                     {["S", "M", "L", "XL", "XXL", "XXXL"].map((size) => (
-                                                        <SelectItem key={size} value={size}>{size}</SelectItem>
+                                                        <SelectItem key={size} value={size}>
+                                                            {size}
+                                                            {surchargeEnabled && getSizeSurcharge(size) > 0 && (
+                                                                ` (+${getSizeSurcharge(size).toLocaleString("id-ID")})`
+                                                            )}
+                                                        </SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
@@ -269,7 +311,8 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                                 </Button>
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold" disabled={loading}>
