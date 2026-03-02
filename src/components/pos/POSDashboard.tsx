@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { getVariantPrice } from "@/lib/utils";
@@ -24,6 +24,7 @@ import {
     BarChart3,
     Settings,
     Loader2,
+    ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
 import CheckoutDialog from "./CheckoutDialog";
@@ -254,6 +255,11 @@ export default function POSDashboard({ user, profile, categories, products: init
                                             <div className="text-center">
                                                 <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-50" />
                                                 <p>Keranjang kosong</p>
+                                                <SheetClose asChild>
+                                                    <Button variant="outline" size="sm" className="mt-4 border-border text-muted-foreground hover:text-foreground">
+                                                        <ArrowLeft className="h-4 w-4 mr-2" /> Kembali ke POS
+                                                    </Button>
+                                                </SheetClose>
                                             </div>
                                         </div>
                                     ) : (
