@@ -16,3 +16,12 @@ export function getVariantPrice(basePrice: number, size: string, sizeSurcharge: 
   if (!sizeSurcharge) return basePrice;
   return basePrice + getSizeSurcharge(size);
 }
+
+// Wholesale discount: jika enabled dan qty >= 6, diskon Rp5.000/pcs
+export const WHOLESALE_MIN_QTY = 6;
+export const WHOLESALE_DISCOUNT_AMOUNT = 5000;
+
+export function getWholesaleDiscount(wholesaleEnabled: boolean, quantity: number): number {
+  if (wholesaleEnabled && quantity >= WHOLESALE_MIN_QTY) return WHOLESALE_DISCOUNT_AMOUNT;
+  return 0;
+}

@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { getVariantPrice } from "@/lib/utils";
+import { getVariantPrice, getWholesaleDiscount, WHOLESALE_MIN_QTY } from "@/lib/utils";
 import {
     ShoppingCart,
     Search,
@@ -117,8 +117,10 @@ export default function POSDashboard({ user, profile, categories, products: init
     // Cart calculations
     const cartTotal = useMemo(() => {
         return cart.reduce((sum, item) => {
-            const price = getVariantPrice(item.variant.product.base_price, item.variant.size, item.variant.product.size_surcharge);
-            return sum + price * item.quantity;
+            const baseVariantPrice = getVariantPrice(item.variant.product.base_price, item.variant.size, item.variant.product.size_surcharge);
+            const wholesaleDisc = getWholesaleDiscount(item.variant.product.wholesale_discount, item.quantity);
+            const finalPrice = baseVariantPrice - wholesaleDisc;
+            return sum + finalPrice * item.quantity;
         }, 0);
     }, [cart]);
 
@@ -265,51 +267,59 @@ export default function POSDashboard({ user, profile, categories, products: init
                                     ) : (
                                         <>
                                             <div className="flex-1 overflow-auto space-y-3">
-                                                {cart.map((item) => (
-                                                    <div key={item.variant.id} className="bg-muted/50 rounded-lg p-3">
-                                                        <div className="flex justify-between items-start">
-                                                            <div className="flex-1">
-                                                                <p className="font-medium text-foreground">{item.variant.product.name}</p>
-                                                                <p className="text-sm text-muted-foreground">
-                                                                    {item.variant.size} / {item.variant.color}
-                                                                </p>
-                                                                <p className="text-amber-500 font-semibold mt-1">
-                                                                    {formatRupiah(getVariantPrice(item.variant.product.base_price, item.variant.size, item.variant.product.size_surcharge))}
-                                                                </p>
+                                                {cart.map((item) => {
+                                                    const unitPrice = getVariantPrice(item.variant.product.base_price, item.variant.size, item.variant.product.size_surcharge);
+                                                    const wholesaleDisc = getWholesaleDiscount(item.variant.product.wholesale_discount, item.quantity);
+                                                    const finalUnitPrice = unitPrice - wholesaleDisc;
+                                                    return (
+                                                        <div key={item.variant.id} className="bg-muted/50 rounded-lg p-3">
+                                                            <div className="flex justify-between items-start">
+                                                                <div className="flex-1">
+                                                                    <p className="font-medium text-foreground">{item.variant.product.name}</p>
+                                                                    <p className="text-sm text-muted-foreground">
+                                                                        {item.variant.size} / {item.variant.color}
+                                                                    </p>
+                                                                    <p className="text-amber-500 font-semibold mt-1">
+                                                                        {formatRupiah(finalUnitPrice)}
+                                                                        {wholesaleDisc > 0 && (
+                                                                            <span className="text-xs text-green-400 ml-1">(-Rp5rb/pcs)</span>
+                                                                        )}
+                                                                    </p>
+                                                                </div>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => removeFromCart(item.variant.id)}
+                                                                    className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
                                                             </div>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() => removeFromCart(item.variant.id)}
-                                                                className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
+                                                            <div className="flex items-center gap-2 mt-2">
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 border-border"
+                                                                    onClick={() => updateQuantity(item.variant.id, -1)}
+                                                                >
+                                                                    <Minus className="h-4 w-4" />
+                                                                </Button>
+                                                                <span className="w-8 text-center text-foreground">{item.quantity}</span>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 border-border"
+                                                                    onClick={() => updateQuantity(item.variant.id, 1)}
+                                                                >
+                                                                    <Plus className="h-4 w-4" />
+                                                                </Button>
+                                                                <span className="ml-auto font-semibold text-foreground">
+                                                                    {formatRupiah(finalUnitPrice * item.quantity)}
+                                                                </span>
+                                                            </div>
                                                         </div>
-                                                        <div className="flex items-center gap-2 mt-2">
-                                                            <Button
-                                                                variant="outline"
-                                                                size="icon"
-                                                                className="h-8 w-8 border-border"
-                                                                onClick={() => updateQuantity(item.variant.id, -1)}
-                                                            >
-                                                                <Minus className="h-4 w-4" />
-                                                            </Button>
-                                                            <span className="w-8 text-center text-foreground">{item.quantity}</span>
-                                                            <Button
-                                                                variant="outline"
-                                                                size="icon"
-                                                                className="h-8 w-8 border-border"
-                                                                onClick={() => updateQuantity(item.variant.id, 1)}
-                                                            >
-                                                                <Plus className="h-4 w-4" />
-                                                            </Button>
-                                                            <span className="ml-auto font-semibold text-foreground">
-                                                                {formatRupiah(getVariantPrice(item.variant.product.base_price, item.variant.size, item.variant.product.size_surcharge) * item.quantity)}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                             <Separator className="my-4 bg-border" />
                                             <div className="space-y-3">
@@ -492,6 +502,11 @@ function ProductCard({
                         ? formatRupiah(getVariantPrice(product.base_price, selectedVariant.size, true))
                         : formatRupiah(product.base_price)}
                 </p>
+                {product.wholesale_discount && (
+                    <p className="text-xs text-green-400">
+                        ≥{WHOLESALE_MIN_QTY} pcs: -Rp5rb/pcs
+                    </p>
+                )}
 
                 {/* Variant Selectors Wrapper */}
                 {(availableSizes.length > 0 || (selectedVariant && availableColors.length > 1)) && (

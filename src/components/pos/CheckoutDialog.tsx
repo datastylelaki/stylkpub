@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { usePrinter } from "@/components/PrinterProvider";
 import type { ReceiptData } from "@/lib/thermal-printer";
-import { getVariantPrice } from "@/lib/utils";
+import { getVariantPrice, getWholesaleDiscount } from "@/lib/utils";
 
 interface CheckoutDialogProps {
     open: boolean;
@@ -47,11 +47,11 @@ const QRIS_IMAGE_URL = "https://voploqlagkqdpoiknxxb.supabase.co/storage/v1/obje
 
 const VOUCHER_MIN = 150_000;
 const VOUCHER_OPTIONS = [
-    { label: "Rp5.000",   value: 5_000 },
-    { label: "Rp10.000",  value: 10_000 },
-    { label: "Rp15.000",  value: 15_000 },
-    { label: "Rp20.000",  value: 20_000 },
-    { label: "Rp30.000",  value: 30_000 },
+    { label: "Rp5.000", value: 5_000 },
+    { label: "Rp10.000", value: 10_000 },
+    { label: "Rp15.000", value: 15_000 },
+    { label: "Rp20.000", value: 20_000 },
+    { label: "Rp30.000", value: 30_000 },
     { label: "Free Kaos", value: 0 },
 ] as const;
 type VoucherOption = typeof VOUCHER_OPTIONS[number];
@@ -161,7 +161,6 @@ export default function CheckoutDialog({
 
             if (txError) throw txError;
 
-            // Build transaction items
             const items: {
                 transaction_id: string;
                 variant_id: string | null;
@@ -169,14 +168,18 @@ export default function CheckoutDialog({
                 variant_info: string | null;
                 quantity: number;
                 price: number;
-            }[] = cart.map((item) => ({
-                transaction_id: transaction.id,
-                variant_id: item.variant.id,
-                product_name: item.variant.product.name,
-                variant_info: `${item.variant.size} / ${item.variant.color}`,
-                quantity: item.quantity,
-                price: getVariantPrice(item.variant.product.base_price, item.variant.size, item.variant.product.size_surcharge),
-            }));
+            }[] = cart.map((item) => {
+                const basePrice = getVariantPrice(item.variant.product.base_price, item.variant.size, item.variant.product.size_surcharge);
+                const wholesaleDisc = getWholesaleDiscount(item.variant.product.wholesale_discount, item.quantity);
+                return {
+                    transaction_id: transaction.id,
+                    variant_id: item.variant.id,
+                    product_name: item.variant.product.name,
+                    variant_info: `${item.variant.size} / ${item.variant.color}`,
+                    quantity: item.quantity,
+                    price: basePrice - wholesaleDisc,
+                };
+            });
 
             if (tebusQty > 0) {
                 items.push({
@@ -244,12 +247,16 @@ export default function CheckoutDialog({
             storePhone: storeSettings?.store_phone || undefined,
             receiptFooter: storeSettings?.receipt_footer || undefined,
             items: [
-                ...cart.map((item) => ({
-                    name: item.variant.product.name,
-                    variantInfo: `${item.variant.size} / ${item.variant.color}`,
-                    quantity: item.quantity,
-                    price: getVariantPrice(item.variant.product.base_price, item.variant.size, item.variant.product.size_surcharge),
-                })),
+                ...cart.map((item) => {
+                    const basePrice = getVariantPrice(item.variant.product.base_price, item.variant.size, item.variant.product.size_surcharge);
+                    const wholesaleDisc = getWholesaleDiscount(item.variant.product.wholesale_discount, item.quantity);
+                    return {
+                        name: item.variant.product.name,
+                        variantInfo: `${item.variant.size} / ${item.variant.color}`,
+                        quantity: item.quantity,
+                        price: basePrice - wholesaleDisc,
+                    };
+                }),
                 ...(tebusQty > 0 ? [{
                     name: "Tebus Murah",
                     variantInfo: "",

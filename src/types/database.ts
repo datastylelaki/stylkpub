@@ -12,6 +12,7 @@ export interface Product {
     category_id: string | null;
     base_price: number;
     size_surcharge: boolean;
+    wholesale_discount: boolean;
     image_url: string | null;
     created_at: string;
     category?: Category;

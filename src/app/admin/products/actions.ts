@@ -17,6 +17,7 @@ const productSchema = z.object({
     category_id: z.string().uuid("Invalid category"),
     base_price: z.number().min(0, "Price cannot be negative"),
     size_surcharge: z.boolean(),
+    wholesale_discount: z.boolean(),
     image_url: z.string().optional(),
     variants: z.array(variantSchema).min(1, "At least one variant is required"),
 });
@@ -46,6 +47,7 @@ export async function createProduct(data: ProductFormValues) {
             category_id: data.category_id,
             base_price: data.base_price,
             size_surcharge: data.size_surcharge,
+            wholesale_discount: data.wholesale_discount,
             image_url: data.image_url,
         })
         .select()
@@ -105,6 +107,7 @@ export async function updateProduct(id: string, data: ProductFormValues) {
             category_id: data.category_id,
             base_price: data.base_price,
             size_surcharge: data.size_surcharge,
+            wholesale_discount: data.wholesale_discount,
             image_url: data.image_url,
         })
         .eq("id", id);

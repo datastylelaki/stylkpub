@@ -34,6 +34,7 @@ const formSchema = z.object({
     category_id: z.string().uuid("Select category"),
     base_price: z.coerce.number().min(0, "Price >= 0"),
     size_surcharge: z.boolean(),
+    wholesale_discount: z.boolean(),
     image_url: z.string().optional(),
     variants: z.array(variantSchema).min(1, "Need 1 variant"),
 });
@@ -52,6 +53,7 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
         category_id: initialData.category_id || "",
         base_price: initialData.base_price,
         size_surcharge: initialData.size_surcharge ?? false,
+        wholesale_discount: initialData.wholesale_discount ?? false,
         image_url: initialData.image_url || "",
         variants: initialData.variants.map(v => ({
             size: v.size,
@@ -62,6 +64,7 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
         name: "",
         base_price: 0,
         size_surcharge: false,
+        wholesale_discount: false,
         category_id: "",
         image_url: "",
         variants: [{ size: "M", color: "Hitam", stock: 10 }],
@@ -178,6 +181,27 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                     )}
                 />
 
+                <FormField
+                    control={form.control}
+                    name="wholesale_discount"
+                    render={({ field }) => (
+                        <FormItem className="flex items-center justify-between rounded-lg border border-input p-4 bg-muted/50">
+                            <div className="space-y-0.5">
+                                <FormLabel className="text-sm font-medium">Diskon Harga Grosir</FormLabel>
+                                <p className="text-xs text-muted-foreground">
+                                    Beli ≥ 6 pcs → diskon Rp5.000/pcs
+                                </p>
+                            </div>
+                            <FormControl>
+                                <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
+
                 <div className="space-y-2">
                     <FormLabel>Foto Produk</FormLabel>
                     <div className="flex items-center gap-4">
@@ -237,80 +261,80 @@ export function ProductForm({ categories, initialData }: ProductFormProps) {
                         const surchargeAmount = surchargeEnabled ? getSizeSurcharge(variantSize) : 0;
 
                         return (
-                        <div key={field.id} className="p-4 border border-input rounded-lg bg-muted/50 space-y-4 md:space-y-0 md:flex md:gap-4 md:items-end">
-                            {surchargeAmount > 0 && (
-                                <div className="md:hidden text-xs text-amber-500 font-medium">
-                                    Harga: Rp{(basePrice + surchargeAmount).toLocaleString("id-ID")} (+Rp{surchargeAmount.toLocaleString("id-ID")})
-                                </div>
-                            )}
-                            <div className="grid grid-cols-2 md:contents gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name={`variants.${index}.size`}
-                                    render={({ field }) => (
-                                        <FormItem className="md:flex-1">
-                                            <FormLabel className="text-xs text-muted-foreground">Size</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <div key={field.id} className="p-4 border border-input rounded-lg bg-muted/50 space-y-4 md:space-y-0 md:flex md:gap-4 md:items-end">
+                                {surchargeAmount > 0 && (
+                                    <div className="md:hidden text-xs text-amber-500 font-medium">
+                                        Harga: Rp{(basePrice + surchargeAmount).toLocaleString("id-ID")} (+Rp{surchargeAmount.toLocaleString("id-ID")})
+                                    </div>
+                                )}
+                                <div className="grid grid-cols-2 md:contents gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name={`variants.${index}.size`}
+                                        render={({ field }) => (
+                                            <FormItem className="md:flex-1">
+                                                <FormLabel className="text-xs text-muted-foreground">Size</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="h-10 md:h-8 bg-background border-input">
+                                                            <SelectValue placeholder="Pilih Size" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent className="bg-background border-input">
+                                                        {["S", "M", "L", "XL", "XXL", "XXXL"].map((size) => (
+                                                            <SelectItem key={size} value={size}>
+                                                                {size}
+                                                                {surchargeEnabled && getSizeSurcharge(size) > 0 && (
+                                                                    ` (+${getSizeSurcharge(size).toLocaleString("id-ID")})`
+                                                                )}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name={`variants.${index}.color`}
+                                        render={({ field }) => (
+                                            <FormItem className="md:flex-1">
+                                                <FormLabel className="text-xs text-muted-foreground">Warna</FormLabel>
                                                 <FormControl>
-                                                    <SelectTrigger className="h-10 md:h-8 bg-background border-input">
-                                                        <SelectValue placeholder="Pilih Size" />
-                                                    </SelectTrigger>
+                                                    <Input placeholder="Merah" {...field} className="h-10 md:h-8 bg-background border-input focus:border-amber-500" />
                                                 </FormControl>
-                                                <SelectContent className="bg-background border-input">
-                                                    {["S", "M", "L", "XL", "XXL", "XXXL"].map((size) => (
-                                                        <SelectItem key={size} value={size}>
-                                                            {size}
-                                                            {surchargeEnabled && getSizeSurcharge(size) > 0 && (
-                                                                ` (+${getSizeSurcharge(size).toLocaleString("id-ID")})`
-                                                            )}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name={`variants.${index}.color`}
-                                    render={({ field }) => (
-                                        <FormItem className="md:flex-1">
-                                            <FormLabel className="text-xs text-muted-foreground">Warna</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Merah" {...field} className="h-10 md:h-8 bg-background border-input focus:border-amber-500" />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <div className="flex items-end gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name={`variants.${index}.stock`}
+                                        render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                <FormLabel className="text-xs text-muted-foreground">Stok</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" placeholder="10" {...field} className="h-10 md:h-8 bg-background border-input focus:border-amber-500" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => remove(index)}
+                                        className="h-10 w-10 md:h-8 md:w-8 text-red-500 hover:text-red-400 hover:bg-red-900/20 border border-input md:border-none"
+                                        disabled={fields.length === 1}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
-                            <div className="flex items-end gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name={`variants.${index}.stock`}
-                                    render={({ field }) => (
-                                        <FormItem className="flex-1">
-                                            <FormLabel className="text-xs text-muted-foreground">Stok</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" placeholder="10" {...field} className="h-10 md:h-8 bg-background border-input focus:border-amber-500" />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => remove(index)}
-                                    className="h-10 w-10 md:h-8 md:w-8 text-red-500 hover:text-red-400 hover:bg-red-900/20 border border-input md:border-none"
-                                    disabled={fields.length === 1}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
                         );
                     })}
                 </div>
