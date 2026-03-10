@@ -11,8 +11,20 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Download, Calendar } from "lucide-react";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Download, Calendar, Trash2, Loader2 } from "lucide-react";
 import { Transaction } from "@/types/database";
+import { deleteTransaction } from "@/app/reports/actions";
 
 interface DailyReportProps {
     transactions: Transaction[];
@@ -24,6 +36,7 @@ export function DailyReport({ transactions }: DailyReportProps) {
     const [startDate, setStartDate] = useState<string>(today);
     const [endDate, setEndDate] = useState<string>(today);
     const [rangeType, setRangeType] = useState("today");
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const dailyData = useMemo(() => {
         if (!transactions) return { stats: { total: 0, cash: 0, qris: 0, count: 0, cashCount: 0, qrisCount: 0 }, transactions: [] };
@@ -107,6 +120,20 @@ export function DailyReport({ transactions }: DailyReportProps) {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    };
+
+    const handleDelete = async (transactionId: string) => {
+        setDeletingId(transactionId);
+        try {
+            const result = await deleteTransaction(transactionId);
+            if (!result.success) {
+                alert(`Gagal hapus: ${result.error}`);
+            }
+        } catch {
+            alert("Terjadi kesalahan saat menghapus transaksi");
+        } finally {
+            setDeletingId(null);
+        }
     };
 
     return (
@@ -229,13 +256,14 @@ export function DailyReport({ transactions }: DailyReportProps) {
                                     <th className="px-4 py-3">ID Transaksi</th>
                                     <th className="px-4 py-3">Metode</th>
                                     <th className="px-4 py-3 text-right">Total</th>
+                                    <th className="px-4 py-3 text-center w-16">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-zinc-800">
                                 {dailyData.transactions.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan={4}
+                                            colSpan={5}
                                             className="px-4 py-8 text-center text-muted-foreground"
                                         >
                                             Tidak ada transaksi pada periode ini
@@ -265,6 +293,45 @@ export function DailyReport({ transactions }: DailyReportProps) {
                                             </td>
                                             <td className="px-4 py-3 text-right font-medium">
                                                 Rp {t.total.toLocaleString("id-ID")}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-zinc-500 hover:text-red-500 hover:bg-red-500/10"
+                                                            disabled={deletingId === t.id}
+                                                        >
+                                                            {deletingId === t.id ? (
+                                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                            ) : (
+                                                                <Trash2 className="h-4 w-4" />
+                                                            )}
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white">
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Hapus Transaksi?</AlertDialogTitle>
+                                                            <AlertDialogDescription className="text-zinc-400">
+                                                                Transaksi <span className="font-mono font-bold text-white">#{t.id.substring(0, 8)}</span> senilai{" "}
+                                                                <span className="font-bold text-white">Rp {t.total.toLocaleString("id-ID")}</span>{" "}
+                                                                akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel className="bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700">
+                                                                Batal
+                                                            </AlertDialogCancel>
+                                                            <AlertDialogAction
+                                                                variant="destructive"
+                                                                onClick={() => handleDelete(t.id)}
+                                                            >
+                                                                Hapus
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
                                             </td>
                                         </tr>
                                     ))
