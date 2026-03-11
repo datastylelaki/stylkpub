@@ -316,7 +316,7 @@ export function DailyReport({ transactions, items = [] }: DailyReportProps) {
                                                                 <Eye className="h-4 w-4" />
                                                             </Button>
                                                         </DialogTrigger>
-                                                        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-md">
+                                                        <DialogContent className="bg-zinc-900 border-zinc-800 text-white w-[95vw] max-w-md max-h-[90vh] overflow-y-auto">
                                                             <DialogHeader>
                                                                 <DialogTitle>Detail Transaksi #{t.id.substring(0, 8)}</DialogTitle>
                                                                 <DialogDescription className="text-zinc-400">
@@ -328,7 +328,7 @@ export function DailyReport({ transactions, items = [] }: DailyReportProps) {
                                                             </DialogHeader>
                                                             <div className="mt-4 space-y-4">
                                                                 <div className="rounded-md border border-zinc-800 p-4">
-                                                                    <div className="space-y-3">
+                                                                    <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2">
                                                                         {items.filter(item => item.transaction_id === t.id).map((item) => (
                                                                             <div key={item.id} className="flex justify-between items-start text-sm">
                                                                                 <div>
@@ -347,9 +347,23 @@ export function DailyReport({ transactions, items = [] }: DailyReportProps) {
                                                                     </div>
                                                                     <div className="mt-4 pt-4 border-t border-zinc-800">
                                                                         {t.discount > 0 && (
-                                                                            <div className="flex justify-between text-sm mb-2 text-zinc-300">
-                                                                                <span>Diskon {t.discount_label ? `(${t.discount_label})` : ""}</span>
-                                                                                <span className="text-red-400">-Rp {t.discount.toLocaleString("id-ID")}</span>
+                                                                            <div className="flex justify-between text-sm mb-2 text-zinc-300 gap-4">
+                                                                                <span className="flex-1">
+                                                                                    Diskon
+                                                                                    {t.discount_label && (
+                                                                                        <span className="block text-xs text-zinc-500 mt-0.5 break-words">
+                                                                                            {(() => {
+                                                                                                try {
+                                                                                                    const parsed = JSON.parse(t.discount_label);
+                                                                                                    return Array.isArray(parsed) ? `(${parsed.join(", ")})` : `(${t.discount_label})`;
+                                                                                                } catch {
+                                                                                                    return `(${t.discount_label})`;
+                                                                                                }
+                                                                                            })()}
+                                                                                        </span>
+                                                                                    )}
+                                                                                </span>
+                                                                                <span className="text-red-400 shrink-0 text-right">-Rp {t.discount.toLocaleString("id-ID")}</span>
                                                                             </div>
                                                                         )}
                                                                         <div className="flex justify-between font-bold text-base text-white">
