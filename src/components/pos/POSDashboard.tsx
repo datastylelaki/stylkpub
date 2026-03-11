@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { Category, Product, ProductVariant, Profile, CartItem } from "@/types/database";
+import { Category, Product, ProductVariant, Profile, CartItem, SavedOrder } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -23,8 +23,9 @@ import {
     Package,
     BarChart3,
     Settings,
-    Loader2,
     ArrowLeft,
+    Clock,
+    Save,
 } from "lucide-react";
 import Link from "next/link";
 import CheckoutDialog from "./CheckoutDialog";
@@ -43,7 +44,28 @@ export default function POSDashboard({ user, profile, categories, products: init
     const [cart, setCart] = useState<CartItem[]>([]);
     const [checkoutOpen, setCheckoutOpen] = useState(false);
     const [products, setProducts] = useState(initialProducts);
+    const [savedOrders, setSavedOrders] = useState<SavedOrder[]>(() => {
+        if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem("pos_saved_orders");
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch (err) {
+                    console.error("Failed to parse saved orders", err);
+                }
+            }
+        }
+        return [];
+    });
+    const [savedOrdersOpen, setSavedOrdersOpen] = useState(false);
     const supabase = createClient();
+
+    // Effect to auto-save savedOrders to localStorage when it changes
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem("pos_saved_orders", JSON.stringify(savedOrders));
+        }
+    }, [savedOrders]);
 
     // Real-time stock updates for products AND variants
     useEffect(() => {
@@ -181,6 +203,53 @@ export default function POSDashboard({ user, profile, categories, products: init
         setCart([]);
     }
 
+    // Save Order Logic
+    function saveOrder() {
+        if (cart.length === 0) {
+            toast.error("Keranjang kosong!");
+            return;
+        }
+        if (savedOrders.length >= 10) {
+            toast.error("Maksimal 10 order yang bisa disimpan. Harap selesaikan atau hapus order yang tertahan.");
+            return;
+        }
+
+        const orderName = window.prompt("Masukkan nama pelanggan atau catatan untuk order ini:")?.trim();
+        if (!orderName) return; // User cancelled or left empty
+
+        const newSavedOrder: SavedOrder = {
+            id: crypto.randomUUID(),
+            name: orderName,
+            timestamp: Date.now(),
+            cart: [...cart]
+        };
+
+        setSavedOrders(prev => [newSavedOrder, ...prev]);
+        setCart([]);
+        toast.success(`Order "${orderName}" berhasil disimpan!`);
+    }
+
+    function restoreOrder(orderId: string) {
+        const orderToRestore = savedOrders.find(o => o.id === orderId);
+        if (!orderToRestore) return;
+
+        if (cart.length > 0) {
+            const confirm = window.confirm("Keranjang saat ini tidak kosong. Mengembalikan order yang disimpan akan menimpa (mengganti) keranjang saat ini. Lanjutkan?");
+            if (!confirm) return;
+        }
+
+        setCart([...orderToRestore.cart]);
+        setSavedOrders(prev => prev.filter(o => o.id !== orderId));
+        setSavedOrdersOpen(false);
+        toast.success(`Order "${orderToRestore.name}" berhasil dilanjutkan.`);
+    }
+
+    function deleteSavedOrder(orderId: string) {
+        if (!window.confirm("Apakah Anda yakin ingin menghapus order yang tersimpan ini? Item tidak akan dipulihkan.")) return;
+        setSavedOrders(prev => prev.filter(o => o.id !== orderId));
+        toast.success("Order tersimpan dihapus.");
+    }
+
     // Logout
     async function handleLogout() {
         await supabase.auth.signOut();
@@ -234,6 +303,69 @@ export default function POSDashboard({ user, profile, categories, products: init
                         )}
 
                         <ModeToggle />
+
+                        {/* Saved Orders Button */}
+                        {savedOrders.length > 0 && (
+                            <Sheet open={savedOrdersOpen} onOpenChange={setSavedOrdersOpen}>
+                                <SheetTrigger asChild>
+                                    <Button variant="outline" size="icon" className="relative border-amber-500/50 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500">
+                                        <Clock className="h-5 w-5" />
+                                        <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center bg-amber-500 text-black">
+                                            {savedOrders.length}
+                                        </Badge>
+                                    </Button>
+                                </SheetTrigger>
+                                <SheetContent className="w-full sm:max-w-md bg-background border-border flex flex-col">
+                                    <SheetHeader>
+                                        <SheetTitle className="text-foreground">Order Tertahan ({savedOrders.length})</SheetTitle>
+                                    </SheetHeader>
+                                    <div className="flex-1 overflow-auto mt-4 space-y-3 pr-2">
+                                        {savedOrders.map((order) => {
+                                            const totalItems = order.cart.reduce((sum, item) => sum + item.quantity, 0);
+                                            const orderTotal = order.cart.reduce((sum, item) => {
+                                                const bp = getVariantPrice(item.variant.product.base_price, item.variant.size, item.variant.product.size_surcharge);
+                                                const wd = getWholesaleDiscount(item.variant.product.wholesale_discount, item.quantity);
+                                                return sum + ((bp - wd) * item.quantity);
+                                            }, 0);
+
+                                            return (
+                                                <Card key={order.id} className="p-4 bg-muted/50 border-border">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div>
+                                                            <h4 className="font-semibold text-foreground text-lg">{order.name}</h4>
+                                                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                                                <Clock className="w-3 h-3" />
+                                                                {new Date(order.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="font-bold text-amber-500">{formatRupiah(orderTotal)}</p>
+                                                            <p className="text-xs text-muted-foreground">{totalItems} Item</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-2 mt-4">
+                                                        <Button 
+                                                            variant="default" 
+                                                            className="flex-1 bg-amber-500 hover:bg-amber-600 text-black"
+                                                            onClick={() => restoreOrder(order.id)}
+                                                        >
+                                                            Lanjutkan
+                                                        </Button>
+                                                        <Button 
+                                                            variant="destructive" 
+                                                            size="icon"
+                                                            onClick={() => deleteSavedOrder(order.id)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </Card>
+                                            );
+                                        })}
+                                    </div>
+                                </SheetContent>
+                            </Sheet>
+                        )}
 
                         {/* Cart Button */}
                         <Sheet>
@@ -327,12 +459,22 @@ export default function POSDashboard({ user, profile, categories, products: init
                                                     <span className="text-foreground">Total</span>
                                                     <span className="text-amber-500">{formatRupiah(cartTotal)}</span>
                                                 </div>
-                                                <Button
-                                                    className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
-                                                    onClick={() => setCheckoutOpen(true)}
-                                                >
-                                                    Bayar Sekarang
-                                                </Button>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        className="flex-1 border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
+                                                        onClick={saveOrder}
+                                                    >
+                                                        <Save className="h-4 w-4 mr-2" />
+                                                        Simpan
+                                                    </Button>
+                                                    <Button
+                                                        className="flex-[2] bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
+                                                        onClick={() => setCheckoutOpen(true)}
+                                                    >
+                                                        Bayar
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </>
                                     )}

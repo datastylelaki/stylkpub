@@ -81,3 +81,10 @@ export interface CartItem {
     variant: ProductVariant & { product: Product };
     quantity: number;
 }
+
+export interface SavedOrder {
+    id: string;
+    name: string;
+    timestamp: number;
+    cart: CartItem[];
+}
