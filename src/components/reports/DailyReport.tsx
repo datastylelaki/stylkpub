@@ -22,15 +22,24 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Download, Calendar, Trash2, Loader2 } from "lucide-react";
-import { Transaction } from "@/types/database";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Download, Trash2, Loader2, Eye } from "lucide-react";
+import { Transaction, TransactionItem } from "@/types/database";
 import { deleteTransaction } from "@/app/reports/actions";
 
 interface DailyReportProps {
     transactions: Transaction[];
+    items?: TransactionItem[];
 }
 
-export function DailyReport({ transactions }: DailyReportProps) {
+export function DailyReport({ transactions, items = [] }: DailyReportProps) {
     // Default to today's date in local format YYYY-MM-DD
     const today = new Date().toLocaleDateString("en-CA");
     const [startDate, setStartDate] = useState<string>(today);
@@ -295,43 +304,115 @@ export function DailyReport({ transactions }: DailyReportProps) {
                                                 Rp {t.total.toLocaleString("id-ID")}
                                             </td>
                                             <td className="px-4 py-3 text-center">
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 text-zinc-500 hover:text-red-500 hover:bg-red-500/10"
-                                                            disabled={deletingId === t.id}
-                                                        >
-                                                            {deletingId === t.id ? (
-                                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                                            ) : (
-                                                                <Trash2 className="h-4 w-4" />
-                                                            )}
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white">
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Hapus Transaksi?</AlertDialogTitle>
-                                                            <AlertDialogDescription className="text-zinc-400">
-                                                                Transaksi <span className="font-mono font-bold text-white">#{t.id.substring(0, 8)}</span> senilai{" "}
-                                                                <span className="font-bold text-white">Rp {t.total.toLocaleString("id-ID")}</span>{" "}
-                                                                akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel className="bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700">
-                                                                Batal
-                                                            </AlertDialogCancel>
-                                                            <AlertDialogAction
-                                                                variant="destructive"
-                                                                onClick={() => handleDelete(t.id)}
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <Dialog>
+                                                        <DialogTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-zinc-500 hover:text-white hover:bg-zinc-800"
+                                                                title="Detail Transaksi"
                                                             >
-                                                                Hapus
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
+                                                                <Eye className="h-4 w-4" />
+                                                            </Button>
+                                                        </DialogTrigger>
+                                                        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-md">
+                                                            <DialogHeader>
+                                                                <DialogTitle>Detail Transaksi #{t.id.substring(0, 8)}</DialogTitle>
+                                                                <DialogDescription className="text-zinc-400">
+                                                                    {new Date(t.created_at).toLocaleString("id-ID", {
+                                                                        dateStyle: "full",
+                                                                        timeStyle: "short",
+                                                                    })}
+                                                                </DialogDescription>
+                                                            </DialogHeader>
+                                                            <div className="mt-4 space-y-4">
+                                                                <div className="rounded-md border border-zinc-800 p-4">
+                                                                    <div className="space-y-3">
+                                                                        {items.filter(item => item.transaction_id === t.id).map((item) => (
+                                                                            <div key={item.id} className="flex justify-between items-start text-sm">
+                                                                                <div>
+                                                                                    <div className="font-medium text-white">{item.product_name} x {item.quantity}</div>
+                                                                                    {item.variant_info && (
+                                                                                        <div className="text-xs text-zinc-400 mt-0.5">
+                                                                                            {item.variant_info}
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                                <div className="font-medium text-white text-right">
+                                                                                    Rp {(item.price * item.quantity).toLocaleString("id-ID")}
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                    <div className="mt-4 pt-4 border-t border-zinc-800">
+                                                                        {t.discount > 0 && (
+                                                                            <div className="flex justify-between text-sm mb-2 text-zinc-300">
+                                                                                <span>Diskon {t.discount_label ? `(${t.discount_label})` : ""}</span>
+                                                                                <span className="text-red-400">-Rp {t.discount.toLocaleString("id-ID")}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        <div className="flex justify-between font-bold text-base text-white">
+                                                                            <span>Total</span>
+                                                                            <span>Rp {t.total.toLocaleString("id-ID")}</span>
+                                                                        </div>
+                                                                        {t.payment_method === 'cash' && (
+                                                                            <>
+                                                                                <div className="flex justify-between text-sm mt-3 text-zinc-400">
+                                                                                    <span>Tunai</span>
+                                                                                    <span>Rp {t.cash_received.toLocaleString("id-ID")}</span>
+                                                                                </div>
+                                                                                <div className="flex justify-between text-sm mt-1 text-zinc-400">
+                                                                                    <span>Kembalian</span>
+                                                                                    <span>Rp {t.change_amount.toLocaleString("id-ID")}</span>
+                                                                                </div>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </DialogContent>
+                                                    </Dialog>
+
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-zinc-500 hover:text-red-500 hover:bg-red-500/10"
+                                                                disabled={deletingId === t.id}
+                                                                title="Hapus Transaksi"
+                                                            >
+                                                                {deletingId === t.id ? (
+                                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                                ) : (
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                )}
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white">
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Hapus Transaksi?</AlertDialogTitle>
+                                                                <AlertDialogDescription className="text-zinc-400">
+                                                                    Transaksi <span className="font-mono font-bold text-white">#{t.id.substring(0, 8)}</span> senilai{" "}
+                                                                    <span className="font-bold text-white">Rp {t.total.toLocaleString("id-ID")}</span>{" "}
+                                                                    akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel className="bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700">
+                                                                    Batal
+                                                                </AlertDialogCancel>
+                                                                <AlertDialogAction
+                                                                    variant="destructive"
+                                                                    onClick={() => handleDelete(t.id)}
+                                                                >
+                                                                    Hapus
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))

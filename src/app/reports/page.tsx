@@ -271,7 +271,7 @@ export default async function ReportsPage() {
             </div>
 
             {/* Daily Report Section */}
-            <DailyReport transactions={transactions || []} />
+            <DailyReport transactions={transactions || []} items={items || []} />
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="col-span-4 bg-zinc-900 border-zinc-800 text-white">
